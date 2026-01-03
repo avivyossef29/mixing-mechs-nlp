@@ -9,7 +9,7 @@ in CausalAbstraction/neural/pipeline.py.
 from abc import ABC, abstractmethod
 from typing import Optional, Any
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, GPTNeoXTokenizerFast
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class BindingModelWrapper(ABC):
