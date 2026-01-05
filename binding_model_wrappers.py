@@ -148,7 +148,7 @@ def create_model_wrapper(model_id: str, **kwargs: Any) -> BindingModelWrapper:
     mid = model_id.lower()
     if "mpt" in mid:
         return MPTModelWrapper(model_id, **kwargs)
-    elif "mamba" in mid or "zamba" in mid:
+    elif "mamba" in mid or "zamba" in mid or "falcon" in mid:
         return MambaModelWrapper(model_id, **kwargs)
     else:
         raise ValueError(f"Unsupported model ID: {model_id}")
