@@ -282,6 +282,18 @@ def main():
         default=None,
         help="Output directory (default: model name)",
     )
+    parser.add_argument(
+        "--start-layer",
+        type=int,
+        default=None,
+        help="Start layer index (0-based, inclusive). If not specified, starts from layer 0.",
+    )
+    parser.add_argument(
+        "--end-layer",
+        type=int,
+        default=None,
+        help="End layer index (0-based, inclusive). If not specified, goes to the last layer.",
+    )
     
     args = parser.parse_args()
     
@@ -336,9 +348,24 @@ def main():
         sample_an_answerable_question=sample_answerable_question_template,
     )
     
-    # Iterate over all layers
-    print(f"[+] Running experiments for {num_layers} layers...")
-    for layer in tqdm(range(num_layers), desc="Layers"):
+    # Determine layer range
+    start_layer = args.start_layer if args.start_layer is not None else 0
+    end_layer = args.end_layer if args.end_layer is not None else (num_layers - 1)
+    
+    # Validate layer range
+    if start_layer < 0:
+        raise ValueError(f"start-layer must be >= 0, got {start_layer}")
+    if end_layer >= num_layers:
+        raise ValueError(f"end-layer must be < {num_layers}, got {end_layer}")
+    if start_layer > end_layer:
+        raise ValueError(f"start-layer ({start_layer}) must be <= end-layer ({end_layer})")
+    
+    layer_range = range(start_layer, end_layer + 1)
+    num_layers_to_process = len(layer_range)
+    
+    # Iterate over specified layer range
+    print(f"[+] Running experiments for layers {start_layer} to {end_layer} (inclusive, {num_layers_to_process} layers)...")
+    for layer in tqdm(layer_range, desc="Layers"):
         print(f"\n[+] Processing layer {layer}/{num_layers - 1}")
         
         # Run experiment
