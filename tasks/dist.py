@@ -96,13 +96,17 @@ schemas = [
 
 
 def get_end_str(model_id):
+    model_id_lower = model_id.lower() # Helper to keep logic clean
+    
     end_str = (
         "Answer:\nmodel\n"
-        if "gemma" in model_id
+        if "gemma" in model_id_lower
         else (
             "Answer:assistant\n\n"
-            if "llama" in model_id.lower()
-            else "Answer:\nassistant\n" if "qwen" in model_id.lower() else "Oh no!"
+            if "llama" in model_id_lower or "zamba" in model_id_lower
+            else "Answer:\nassistant\n" if "qwen" in model_id_lower 
+            else "Answer:\n" if "bloomz" in model_id_lower  # Added BLOOMZ here
+            else "Oh no!"
         )
     )
     assert end_str != "Oh no!", f"Model {model_id} not supported"
@@ -120,12 +124,17 @@ def format_prompt(tokenizer, prompt, dont=False) -> str:
     if dont:
         return prompt
 
-    messages = [{"role": "user", "content": prompt}]
-    return tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
-    )[5:]
+    # Check if tokenizer has a chat template
+    if hasattr(tokenizer, 'apply_chat_template') and hasattr(tokenizer, 'chat_template') and tokenizer.chat_template:
+        messages = [{"role": "user", "content": prompt}]
+        return tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        )[5:]
+    else:
+        # Fallback for models without chat template (e.g., Bloomz)
+        return prompt
 
 
 from contextlib import contextmanager

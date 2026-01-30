@@ -28,6 +28,7 @@ transformers.logging.set_verbosity_error()
 import pandas as pd
 import torch
 import matplotlib.pyplot as plt
+import re
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from tqdm import tqdm
 
@@ -42,7 +43,7 @@ from tasks.dist import (
     get_end_str,
     format_prompt,
     to_str_tokens,
-    to_single_token,
+
     run_with_cf_hf,
     try_schema_checker,
     _num_layers,
@@ -171,7 +172,9 @@ def run_experiment_for_layer(
         ):
             input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(model.device)
             logits = model(input_ids).logits
-            values = logits[0, -1, [to_single_token(tokenizer, prompt_str_tokenized[i]) for i in answer_indices]]
+            # Get token IDs directly from input_ids instead of re-tokenizing strings
+            token_ids_at_answer_positions = input_ids[0, answer_indices].tolist()
+            values = logits[0, -1, token_ids_at_answer_positions]
 
             pos_pred = values.argmax().item()
 
@@ -181,6 +184,10 @@ def run_experiment_for_layer(
                 pred = pred[pred.find(end_str) + len(end_str) :]
             else:
                 pred = prompt_str_tokenized[answer_indices[pos_pred]]
+            
+            # Strip whitespace and clean prediction to ensure proper matching
+            # Remove all whitespace characters (spaces, tabs, newlines, etc.)
+            pred = re.sub(r'\s+', '', pred.strip())
 
             if try_schema_checker(pred, metadata["positional"], schema):
                 patch_effect = "positional"
@@ -318,7 +325,7 @@ def main():
     }
     if args.hf_token:
         model_kwargs["token"] = args.hf_token
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, **model_kwargs)
+    model = AutoModelForCausalLM.from_pretrained(args.model_id, trust_remote_code=True, **model_kwargs)
     tokenizer = AutoTokenizer.from_pretrained(args.model_id, token=args.hf_token if args.hf_token else None)
     
     # Get number of layers
