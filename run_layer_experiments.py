@@ -171,7 +171,12 @@ def run_experiment_for_layer(
             model, tokenizer, prompt, cf_prompt, layer_idx=layer, token_positions=token_positions, alpha=1
         ):
             input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(model.device)
-            logits = model(input_ids).logits
+            # START CHANGE
+            with torch.no_grad():
+                # IMPORTANT: This line must be indented further than the 'with' above it
+                logits = model(input_ids).logits
+            # END CHANGE
+
             # Get token IDs directly from input_ids instead of re-tokenizing strings
             token_ids_at_answer_positions = input_ids[0, answer_indices].tolist()
             values = logits[0, -1, token_ids_at_answer_positions]
@@ -317,16 +322,35 @@ def main():
     output_dir.mkdir(exist_ok=True, parents=True)
     print(f"[+] Output directory: {output_dir.absolute()}")
     
-    # Load model and tokenizer
+   # ... inside main() ...
+
     print(f"[+] Loading model: {args.model_id}")
+
+    # 1. Base Configuration
     model_kwargs = {
-        "torch_dtype": torch.bfloat16,
-        "device_map": "auto"
+        "device_map": "auto",
+        "torch_dtype": torch.bfloat16,  # Default for modern models
     }
+
+    # 2. Add Token if present
     if args.hf_token:
         model_kwargs["token"] = args.hf_token
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, trust_remote_code=True, **model_kwargs)
-    tokenizer = AutoTokenizer.from_pretrained(args.model_id, token=args.hf_token if args.hf_token else None)
+
+    # 3. Specific overrides for Falcon or 8-bit models
+    if "falcon" in args.model_id.lower() or "8bit" in args.model_id.lower():
+        print(f"[+] Applying Falcon/8-bit specific model loading configurations")
+        model_kwargs.update({
+            "load_in_8bit": True,
+            "device_map": "auto",
+            "torch_dtype": torch.float16,  # 8-bit usually prefers fp16
+        })
+
+    # 4. Load Model
+    model = AutoModelForCausalLM.from_pretrained(args.model_id, **model_kwargs)
+
+    # 5. Load Tokenizer
+    tokenizer_kwargs = {"token": args.hf_token} if args.hf_token else {}
+    tokenizer = AutoTokenizer.from_pretrained(args.model_id, **tokenizer_kwargs)
     
     # Get number of layers
     num_layers = _num_layers(model)

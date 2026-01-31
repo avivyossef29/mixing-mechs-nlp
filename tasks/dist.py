@@ -103,7 +103,7 @@ def get_end_str(model_id):
         if "gemma" in model_id_lower
         else (
             "Answer:assistant\n\n"
-            if "llama" in model_id_lower or "zamba" in model_id_lower
+            if "llama" in model_id_lower or "zamba" in model_id_lower or "falcon" in model_id_lower
             else "Answer:\nassistant\n" if "qwen" in model_id_lower 
             else "Answer:\n" if "bloomz" in model_id_lower  # Added BLOOMZ here
             else "Oh no!"
