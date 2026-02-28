@@ -344,6 +344,10 @@ def main():
             "device_map": "auto",
             "torch_dtype": torch.float16,  # 8-bit usually prefers fp16
         })
+        
+    elif "zamba" in args.model_id.lower():
+        print(f"[+] Applying Zamba/Mamba specific model loading configurations")
+        model_kwargs["torch_dtype"] = torch.float16
 
     # 4. Load Model
     model = AutoModelForCausalLM.from_pretrained(args.model_id, **model_kwargs)

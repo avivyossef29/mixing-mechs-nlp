@@ -74,7 +74,7 @@ nvidia-nvjitlink-cu12==12.8.93
 nvidia-nvshmem-cu12==3.4.5
 nvidia-nvtx-cu11==11.8.86
 nvidia-nvtx-cu12==12.8.90
-packaging @ file:///home/task_176104874243446/conda-bld/packaging_1761049080023/work
+packaging
 pandas==3.0.0
 parso==0.8.5
 patsy==1.0.2

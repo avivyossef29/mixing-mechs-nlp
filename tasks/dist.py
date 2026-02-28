@@ -103,7 +103,7 @@ def get_end_str(model_id):
         if "gemma" in model_id_lower
         else (
             "Answer:assistant\n\n"
-            if "llama" in model_id_lower or "zamba" in model_id_lower or "falcon" in model_id_lower
+            if "llama" in model_id_lower or "zamba" in model_id_lower or "falcon" in model_id_lower or "mamba" in model_id_lower
             else "Answer:\nassistant\n" if "qwen" in model_id_lower 
             else "Answer:\n" if "bloomz" in model_id_lower  # Added BLOOMZ here
             else "Oh no!"
@@ -154,6 +154,12 @@ def _get_layer_module(model, layer_idx: int):
     # GPT-2 / OPT style
     if hasattr(model, "transformer") and hasattr(model.transformer, "h"):
         return model.transformer.h[layer_idx]
+    # Mamba style (backbone.layers)
+    if hasattr(model, "backbone") and hasattr(model.backbone, "layers"):
+        return model.backbone.layers[layer_idx]
+    # Mamba style (backbone.blocks)
+    if hasattr(model, "backbone") and hasattr(model.backbone, "blocks"):
+        return model.backbone.blocks[layer_idx]
     raise ValueError("Unsupported model architecture: can't find layers container.")
 
 
@@ -164,6 +170,20 @@ def _num_layers(model) -> int:
         return len(model.gpt_neox.layers)
     if hasattr(model, "transformer") and hasattr(model.transformer, "h"):
         return len(model.transformer.h)
+    # Mamba style (backbone.layers)
+    if hasattr(model, "backbone") and hasattr(model.backbone, "layers"):
+        return len(model.backbone.layers)
+    # Mamba style (backbone.blocks)
+    if hasattr(model, "backbone") and hasattr(model.backbone, "blocks"):
+        return len(model.backbone.blocks)
+    # Fallback: try config attributes (similar to binding_model_wrappers.py)
+    if hasattr(model, "config"):
+        if hasattr(model.config, "n_layers"):
+            return model.config.n_layers
+        if hasattr(model.config, "num_hidden_layers"):
+            return model.config.num_hidden_layers
+        if hasattr(model.config, "n_layer"):
+            return model.config.n_layer
     raise ValueError("Unsupported model architecture: can't count layers.")
 
 

@@ -132,7 +132,8 @@ def residual_stream_baselines(
             pipeline, task, list(range(start, end)), token_positions, checker, config=config
         )
         method_model_dir = os.path.join(
-            model_dir, f"DAS_{pipeline.model.__class__.__name__}_{"-".join(target_variables)}"
+            model_dir,
+            f"DAS_{pipeline.model.__class__.__name__}_{'-'.join(target_variables)}",
         )
         experiment.train_interventions(
             train_data, target_variables, method="DAS", verbose=verbose, model_dir=method_model_dir
@@ -159,7 +160,8 @@ def residual_stream_baselines(
         )
         experiment.build_SVD_feature_interventions(train_data, verbose=verbose)  # No PCA=True here
         method_model_dir = os.path.join(
-            model_dir, f"DBM+SVD_{pipeline.model.__class__.__name__}_{"-".join(target_variables)}"
+            model_dir,
+            f"DBM+SVD_{pipeline.model.__class__.__name__}_{'-'.join(target_variables)}",
         )
         experiment.train_interventions(
             train_data, target_variables, method="DBM", verbose=verbose, model_dir=method_model_dir
@@ -186,7 +188,8 @@ def residual_stream_baselines(
         )
         experiment.build_SVD_feature_interventions(train_data, verbose=verbose, PCA=True)  # With PCA=True
         method_model_dir = os.path.join(
-            model_dir, f"DBM+PCA_{pipeline.model.__class__.__name__}_{"-".join(target_variables)}"
+            model_dir,
+            f"DBM+PCA_{pipeline.model.__class__.__name__}_{'-'.join(target_variables)}",
         )
         experiment.train_interventions(
             train_data, target_variables, method="DBM", verbose=verbose, model_dir=method_model_dir
@@ -210,7 +213,8 @@ def residual_stream_baselines(
             pipeline, task, list(range(start, end)), token_positions, checker, config=config
         )
         method_model_dir = os.path.join(
-            model_dir, f"DBM_{pipeline.model.__class__.__name__}_{"-".join(target_variables)}"
+            model_dir,
+            f"DBM_{pipeline.model.__class__.__name__}_{'-'.join(target_variables)}",
         )
         experiment.train_interventions(
             train_data, target_variables, method="DBM", verbose=verbose, model_dir=method_model_dir
@@ -249,7 +253,8 @@ def residual_stream_baselines(
             )
             experiment.build_SAE_feature_intervention(sae_loader)
             method_model_dir = os.path.join(
-                model_dir, f"DBM+SAE_{pipeline.model.__class__.__name__}_{"-".join(target_variables)}"
+                model_dir,
+                f"DBM+SAE_{pipeline.model.__class__.__name__}_{'-'.join(target_variables)}",
             )
             experiment.train_interventions(
                 train_data, target_variables, method="DBM", verbose=verbose, model_dir=method_model_dir
@@ -284,7 +289,8 @@ def residual_stream_baselines(
             )
             experiment.build_SAE_feature_intervention(sae_loader)
             method_model_dir = os.path.join(
-                model_dir, f"DBM+SAE_{pipeline.model.__class__.__name__}_{"-".join(target_variables)}"
+                model_dir,
+                f"DBM+SAE_{pipeline.model.__class__.__name__}_{'-'.join(target_variables)}",
             )
             experiment.train_interventions(
                 train_data, target_variables, method="DBM", verbose=verbose, model_dir=method_model_dir
@@ -358,7 +364,8 @@ def attention_head_baselines(
         config["method_name"] = "full_vector"
         experiment = PatchAttentionHeads(pipeline, task, heads_list, token_positions, checker, config=config)
         method_model_dir = os.path.join(
-            model_dir, f"full_vector_{pipeline.model.__class__.__name__}_{"-".join(target_variables)}"
+            model_dir,
+            f"full_vector_{pipeline.model.__class__.__name__}_{'-'.join(target_variables)}",
         )
         experiment.save_featurizers(None, method_model_dir)
         raw_results = experiment.perform_interventions(
@@ -377,7 +384,8 @@ def attention_head_baselines(
         config["method_name"] = "DAS"
         experiment = PatchAttentionHeads(pipeline, task, heads_list, token_positions, checker, config=config)
         method_model_dir = os.path.join(
-            model_dir, f"DAS_{pipeline.model.__class__.__name__}_{"-".join(target_variables)}"
+            model_dir,
+            f"DAS_{pipeline.model.__class__.__name__}_{'-'.join(target_variables)}",
         )
         experiment.train_interventions(
             train_data, target_variables, method="DAS", verbose=verbose, model_dir=method_model_dir
@@ -399,7 +407,8 @@ def attention_head_baselines(
         config["method_name"] = "DBM"
         experiment = PatchAttentionHeads(pipeline, task, heads_list, token_positions, checker, config=config)
         method_model_dir = os.path.join(
-            model_dir, f"DBM_{pipeline.model.__class__.__name__}_{"-".join(target_variables)}"
+            model_dir,
+            f"DBM_{pipeline.model.__class__.__name__}_{'-'.join(target_variables)}",
         )
         experiment.train_interventions(
             train_data, target_variables, method="DBM", verbose=verbose, model_dir=method_model_dir
@@ -421,7 +430,8 @@ def attention_head_baselines(
         experiment = PatchAttentionHeads(pipeline, task, heads_list, token_positions, checker, config=config)
         experiment.build_SVD_feature_interventions(train_data, verbose=verbose, PCA=False)
         method_model_dir = os.path.join(
-            model_dir, f"DBM+SVD_{pipeline.model.__class__.__name__}_{"-".join(target_variables)}"
+            model_dir,
+            f"DBM+SVD_{pipeline.model.__class__.__name__}_{'-'.join(target_variables)}",
         )
         experiment.train_interventions(
             train_data, target_variables, method="DBM", verbose=verbose, model_dir=method_model_dir
@@ -443,7 +453,8 @@ def attention_head_baselines(
         experiment = PatchAttentionHeads(pipeline, task, heads_list, token_positions, checker, config=config)
         experiment.build_SVD_feature_interventions(train_data, verbose=verbose, PCA=True)
         method_model_dir = os.path.join(
-            model_dir, f"DBM+PCA_{pipeline.model.__class__.__name__}_{"-".join(target_variables)}"
+            model_dir,
+            f"DBM+PCA_{pipeline.model.__class__.__name__}_{'-'.join(target_variables)}",
         )
         experiment.train_interventions(
             train_data, target_variables, method="DBM", verbose=verbose, model_dir=method_model_dir
