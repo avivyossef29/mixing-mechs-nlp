@@ -10,6 +10,7 @@ import os
 import sys
 import argparse
 import logging
+import random
 from pathlib import Path
 
 # Add project root to path
@@ -25,6 +26,7 @@ import transformers
 
 transformers.logging.set_verbosity_error()
 
+import numpy as np
 import pandas as pd
 import torch
 import matplotlib.pyplot as plt
@@ -295,6 +297,12 @@ def main():
         help="Output directory (default: model name)",
     )
     parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Random seed for reproducible dataset generation (default: 42)",
+    )
+    parser.add_argument(
         "--start-layer",
         type=int,
         default=None,
@@ -360,6 +368,12 @@ def main():
     num_layers = _num_layers(model)
     print(f"[+] Model has {num_layers} layers")
     
+    # Set random seed for reproducibility
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    print(f"[+] Random seed set to: {args.seed}")
+
     # Setup causal model and datasets
     print(f"[+] Setting up causal model and datasets")
     causal_model = multi_order_multi_schema_task_to_lookbacks_generic_causal_model(
