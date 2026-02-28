@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ### Resource Allocation ###
-#SBATCH --job-name=gemma_patch
-#SBATCH --output=%x-%j.out        # Log file: gemma_patch-12345.out
+#SBATCH --job-name=zamba2-7B-instruct_patch
+#SBATCH --output=%x-%j.out        # Log file: zamba2-7B-instruct_patch-12345.out
 #SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
 #SBATCH --time=12:00:00           # 12 hours max runtime

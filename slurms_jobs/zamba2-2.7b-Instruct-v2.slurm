@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ### Resource Allocation ###
-#SBATCH --job-name=zamba2-2.7b-Instruct-v2
+#SBATCH --job-name=zamba2-2.7b-Instruct-v2_patch
 #SBATCH --output=%x-%j.out        # Log file: zamba2-2.7b-Instruct-v2-12345.out
 #SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
