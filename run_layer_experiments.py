@@ -344,9 +344,9 @@ def main():
     if args.hf_token:
         model_kwargs["token"] = args.hf_token
 
-    # 3. Specific overrides for Falcon or 8-bit models
-    if "falcon" in args.model_id.lower() or "8bit" in args.model_id.lower():
-        print(f"[+] Applying Falcon/8-bit specific model loading configurations")
+    # 3. Specific overrides for 8-bit models (e.g. falcon-7b-instruct)
+    if "falcon-7b-instruct" in args.model_id.lower() or "8bit" in args.model_id.lower():
+        print(f"[+] Applying 8-bit specific model loading configurations")
         model_kwargs.update({
             "load_in_8bit": True,
             "device_map": "auto",
