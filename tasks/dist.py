@@ -104,8 +104,9 @@ def get_end_str(model_id):
         else (
             "Answer:assistant\n\n"
             if "llama" in model_id_lower or "zamba" in model_id_lower or "falcon" in model_id_lower or "mamba" in model_id_lower
-            else "Answer:\nassistant\n" if "qwen" in model_id_lower 
-            else "Answer:\n" if "bloomz" in model_id_lower  # Added BLOOMZ here
+            else "Answer:\nassistant\n" if "qwen" in model_id_lower
+            else "Answer:\n" if "bloomz" in model_id_lower
+            else "Answer:\n" if "mpt" in model_id_lower
             else "Oh no!"
         )
     )
@@ -154,6 +155,9 @@ def _get_layer_module(model, layer_idx: int):
     # GPT-2 / OPT style
     if hasattr(model, "transformer") and hasattr(model.transformer, "h"):
         return model.transformer.h[layer_idx]
+    # MPT style (transformer.blocks)
+    if hasattr(model, "transformer") and hasattr(model.transformer, "blocks"):
+        return model.transformer.blocks[layer_idx]
     # Mamba style (backbone.layers)
     if hasattr(model, "backbone") and hasattr(model.backbone, "layers"):
         return model.backbone.layers[layer_idx]
@@ -170,6 +174,9 @@ def _num_layers(model) -> int:
         return len(model.gpt_neox.layers)
     if hasattr(model, "transformer") and hasattr(model.transformer, "h"):
         return len(model.transformer.h)
+    # MPT style (transformer.blocks)
+    if hasattr(model, "transformer") and hasattr(model.transformer, "blocks"):
+        return len(model.transformer.blocks)
     # Mamba style (backbone.layers)
     if hasattr(model, "backbone") and hasattr(model.backbone, "layers"):
         return len(model.backbone.layers)
