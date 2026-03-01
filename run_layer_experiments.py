@@ -352,6 +352,21 @@ def main():
             "device_map": "auto",
             "torch_dtype": torch.float16,  # 8-bit usually prefers fp16
         })
+
+    is_mamba = "mamba" in args.model_id.lower()
+
+    if is_mamba:
+        print(f"[+] Mamba model detected. Applying SSM specific configurations.")
+        model_kwargs.update({
+            "trust_remote_code": True,
+        })
+        
+    elif "falcon" in args.model_id.lower() or "8bit" in args.model_id.lower():
+        print(f"[+] Applying Falcon/8-bit specific model loading configurations")
+        model_kwargs.update({
+            "load_in_8bit": True,
+            "torch_dtype": torch.float16,
+        })
         
     elif "zamba" in args.model_id.lower():
         print(f"[+] Applying Zamba/Mamba specific model loading configurations")
@@ -362,10 +377,15 @@ def main():
 
     # 5. Load Tokenizer
     tokenizer_kwargs = {"token": args.hf_token} if args.hf_token else {}
+    if is_mamba:
+        tokenizer_kwargs["trust_remote_code"] = True
     tokenizer = AutoTokenizer.from_pretrained(args.model_id, **tokenizer_kwargs)
-    
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+        
     # Get number of layers
     num_layers = _num_layers(model)
+    
     print(f"[+] Model has {num_layers} layers")
     
     # Set random seed for reproducibility
