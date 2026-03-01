@@ -253,27 +253,56 @@ def run_with_cf_hf(
     # --- hook: forward_pre on the chosen layer to modify its input hidden_states ---
     target_layer = _get_layer_module(model, layer_idx)
 
-    def pre_hook(module, inputs):
-        """
-        For LLaMA/Mistral/GPT2/NeoX forward signatures, the first positional arg
-        is the hidden_states entering the block (= resid_pre).
-        """
-        hidden_states = inputs[0]  # [B, T, D]
-        if hidden_states.dim() != 3:
-            return  # safety
-        if hidden_states.size(1) < max(pos_norm) + 1:
-            return  # sequence shorter than indices; do nothing
+    #Check if mamba or Transformer
+    is_mamba_model = "mamba" in model.__class__.__name__.lower() or (
+        hasattr(model, "config") and hasattr(model.config, "model_type") and "mamba" in model.config.model_type.lower()
+    )
 
-        # Only patch batch 0 to mirror the TL snippet
-        # (extend as needed if you batch)
-        hs = hidden_states.clone()
-        # hs[0, pos_norm, :] = patchey.to(hs.dtype)  # broadcast [P, D] into those positions
-        hs[0, pos_norm, :] = patchey.to(device=hs.device, dtype=hs.dtype)
-        # rebuild args tuple
-        new_inputs = (hs,) + tuple(inputs[1:])
-        return new_inputs
+    #mamba adjustments
+    if is_mamba_model:
+        def pre_hook_mamba(module, args, kwargs):
+            hidden_states = args[0]  # [B, T, D]
+            if hidden_states.dim() != 3 or hidden_states.size(1) < max(pos_norm) + 1:
+                return args, kwargs
 
-    handle = target_layer.register_forward_pre_hook(pre_hook, with_kwargs=False)
+            hs = hidden_states.clone()
+            hs[0, pos_norm, :] = patchey.to(device=hs.device, dtype=hs.dtype)
+
+            new_args = list(args)
+            new_args[0] = hs
+            
+            # איפוס ה-residual המועבר בנפרד בממבה
+            if len(new_args) > 1 and new_args[1] is not None:
+                new_args[1] = torch.zeros_like(new_args[1])
+            if 'residual' in kwargs and kwargs['residual'] is not None:
+                kwargs['residual'] = torch.zeros_like(kwargs['residual'])
+                
+            return tuple(new_args), kwargs
+
+        handle = target_layer.register_forward_pre_hook(pre_hook_mamba, with_kwargs=True)
+        
+    else:
+        def pre_hook(module, inputs):
+            """
+            For LLaMA/Mistral/GPT2/NeoX forward signatures, the first positional arg
+            is the hidden_states entering the block (= resid_pre).
+            """
+            hidden_states = inputs[0]  # [B, T, D]
+            if hidden_states.dim() != 3:
+                return  # safety
+            if hidden_states.size(1) < max(pos_norm) + 1:
+                return  # sequence shorter than indices; do nothing
+    
+            # Only patch batch 0 to mirror the TL snippet
+            # (extend as needed if you batch)
+            hs = hidden_states.clone()
+            # hs[0, pos_norm, :] = patchey.to(hs.dtype)  # broadcast [P, D] into those positions
+            hs[0, pos_norm, :] = patchey.to(device=hs.device, dtype=hs.dtype)
+            # rebuild args tuple
+            new_inputs = (hs,) + tuple(inputs[1:])
+            return new_inputs
+
+        handle = target_layer.register_forward_pre_hook(pre_hook, with_kwargs=False)
 
     try:
         yield  # inside the with-block, call model on 'normal_str' or more inputs
