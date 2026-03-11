@@ -68,8 +68,6 @@ from contextlib import contextmanager
 from functools import partial
 from tqdm import tqdm as _tqdm
 from typing import DefaultDict
-
-
 from datetime import datetime
 import torch
 
@@ -196,6 +194,104 @@ def _to_abs_positions(seq_len: int, positions):
 
 # ---- main context manager ----
 
+
+#new run with hf for mamba
+@contextmanager
+def run_with_cf_hf_hidden_state(
+    model, tokenizer, normal_str, cf_str, layer_idx=18, token_positions=None, alpha=1.0,
+):
+    if token_positions is None: token_positions = [-1]
+    device = next(model.parameters()).device
+    model.eval()
+
+    enc_cf = tokenizer(cf_str, return_tensors="pt").to(device)
+    enc_norm = tokenizer(normal_str, return_tensors="pt").to(device)
+    cf_mixer_outputs = {}
+    
+    def save_cf_hook(module, args, output):
+        cf_mixer_outputs['val'] = output.detach().clone()
+
+    target_mixer = model.backbone.layers[layer_idx].mixer
+    handle_cf = target_mixer.register_forward_hook(save_cf_hook)
+    
+    with torch.no_grad():
+        model(**enc_cf)
+    handle_cf.remove()
+
+    T_cf = cf_mixer_outputs['val'].shape[1]
+    T_norm = enc_norm["input_ids"].shape[1]
+    
+    pos_cf = _to_abs_positions(T_cf, token_positions)
+    pos_norm = _to_abs_positions(T_norm, token_positions)
+    patchey = cf_mixer_outputs['val'][0, pos_cf, :] * alpha 
+
+    def inject_state_hook(module, args, output):
+        output_clone = output.clone()
+        output_clone[0, pos_norm, :] = patchey.to(device=output.device, dtype=output.dtype)
+        return output_clone
+
+    handle_norm = target_mixer.register_forward_hook(inject_state_hook)
+    try:
+        yield
+    finally:
+        handle_norm.remove()
+
+# 2. הפונקציה שמרכזת את שתי ההרצות (Parallel) לאותו דאטה-פריים
+def get_dist_parallel(
+    model, tokenizer, model_name, train_ds, schema, num_samples, layer, cat_to_query, patch_all_indices=True
+):
+    results = {
+        "normal": [], "cf": [], "layer": [],
+        "positional_prediction": [], "payload_prediction": [], "keyload_prediction": [],
+        "prediction_residual": [], "patch_effect_residual": [],
+        "prediction_state": [], "patch_effect_state": [],
+    }
+    
+    train = train_ds[schema.name][schema.name]
+
+    for cur_index in _tqdm(range(num_samples), desc=f"Layer {layer}"):
+        prompt = format_prompt(tokenizer, train[cur_index]["input"]["raw_input"])
+        cf_prompt = format_prompt(tokenizer, train[cur_index]["counterfactual_inputs"][0]["raw_input"])
+        prompt_str_tokenized = to_str_tokens(tokenizer, prompt)
+        metadata = train[cur_index]["input"]["metadata"]
+
+        answer_indices = [i for i, token in enumerate(prompt_str_tokenized) if schema.matchers[cat_to_query](token)]
+        token_positions = answer_indices + [-1] if patch_all_indices else [-1]
+        val_indices = [to_single_token(tokenizer, prompt_str_tokenized[i]) for i in answer_indices]
+        input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(model.device)
+
+        # הרצה 1: Residual
+        with run_with_cf_hf(model, tokenizer, prompt, cf_prompt, layer_idx=layer, token_positions=token_positions):
+            logits_res = model(input_ids).logits
+            pos_pred_res = logits_res[0, -1, val_indices].argmax().item()
+            pred_res = prompt_str_tokenized[answer_indices[pos_pred_res]]
+            
+        # הרצה 2: State (Mixer)
+        with run_with_cf_hf_hidden_state(model, tokenizer, prompt, cf_prompt, layer_idx=layer, token_positions=token_positions):
+            logits_state = model(input_ids).logits
+            pos_pred_state = logits_state[0, -1, val_indices].argmax().item()
+            pred_state = prompt_str_tokenized[answer_indices[pos_pred_state]]
+
+        def check_effect(p):
+            if try_schema_checker(p, metadata["positional"], schema): return "positional"
+            if try_schema_checker(p, metadata["keyload"], schema): return "keyload"
+            if try_schema_checker(p, metadata["payload"], schema): return "payload"
+            return "unknown"
+
+        results["normal"].append(prompt)
+        results["cf"].append(cf_prompt)
+        results["layer"].append(layer)
+        results["positional_prediction"].append(metadata["positional"])
+        results["payload_prediction"].append(metadata["payload"])
+        results["keyload_prediction"].append(metadata["keyload"])
+        results["prediction_residual"].append(pred_res)
+        results["patch_effect_residual"].append(check_effect(pred_res))
+        results["prediction_state"].append(pred_state)
+        results["patch_effect_state"].append(check_effect(pred_state))
+
+    return pd.DataFrame(results)
+
+#original run_with_cf_hf
 
 @contextmanager
 def run_with_cf_hf(
