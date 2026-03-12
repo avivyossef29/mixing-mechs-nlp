@@ -553,7 +553,33 @@ def log(txt):
 #added
 @click.option("--run-parallel", is_flag=True, default=False, help="Run both residual and state patching simultaneously")
 #end
-
+@click.command()
+@click.option("--model-id", type=str, default="google/gemma-2-2b-it")
+@click.option("--schema-name", type=str, default="SCHEMA_BOXES")
+@click.option("--num-instances", type=int, default=20)
+@click.option("--num-samples", type=int, default=1000)
+@click.option("--layer", type=int, default=17)
+@click.option(
+    "--cat-indices-to-query",
+    type=str,
+    default="[0]",
+    help="List of ints, e.g. [0,1]",
+    callback=lambda ctx, param, value: [int(x) for x in eval(value)] if isinstance(value, str) else value,
+)
+@click.option("--cat-to-query", type=int, default=1)
+@click.option("--generate", is_flag=True, default=False)
+@click.option("--messiness", type=int, help="Messiness level: can be 0, 1, or 2")
+@click.option("--num-fillers", type=int, help="Number of fillers per item", default=0)
+@click.option("--write-baseline-rate", is_flag=True, default=False)
+@click.option("--eval-batch-size", type=int, default=100)
+@click.option(
+    "--checkpoint",
+    type=str,
+    default=None,
+    help="Optional checkpoint path to load model weights from",
+)
+@click.option("--do-filter", is_flag=True, default=False)
+@click.option("--run-parallel", is_flag=True, default=False, help="Run both residual and state patching simultaneously")
 def main(
     model_id,
     schema_name,
@@ -563,15 +589,13 @@ def main(
     cat_indices_to_query,
     cat_to_query,
     messiness,
-    generate=False,
-    num_fillers=0,
-    write_baseline_rate=False,
-    eval_batch_size=100,
-    checkpoint=None,
-    do_filter=False,
-    checkpoint=None,
-    do_filter=False,
-    run_parallel=False,
+    generate,
+    num_fillers,
+    write_baseline_rate,
+    eval_batch_size,
+    checkpoint,
+    do_filter,
+    run_parallel,
 ):
     log(
         f"[+] Getting positional separability for {model_id} on {schema_name} with {num_instances} instances, {num_samples} samples, {layer} layer, {cat_indices_to_query} cat indices to query, {cat_to_query} cat to query, {messiness} messiness, {generate} generate"
@@ -585,9 +609,6 @@ def main(
             torch_dtype="auto",
             device_map="auto",
             resume_download=True,
-            state_dict=None,
-            local_files_only=False,
-            # The checkpoint argument is passed as the 'revision' parameter in HuggingFace
             revision=checkpoint,
         )
     else:
@@ -641,7 +662,7 @@ def main(
         causal_models=causal_models,
         sample_an_answerable_question=sample_answerable_question_template,
     )
-    
+
     if run_parallel:
         log("[+] Running in PARALLEL mode (Residual vs State)")
         df = get_dist_parallel(
@@ -656,7 +677,6 @@ def main(
             patch_all_indices=True 
         )
 
-        # שמירת התוצאות של ההרצה המקבילה
         out_name = f"binding_results/dists/parallel_{model_id.replace('/', '_')}_{num_instances}_{num_samples}_{layer}_{cat_to_query}_{schema.name}_mess{messiness}_fill{num_fillers}_{datetime.now().strftime('%Y%m%d')}.csv"
         df.to_csv(out_name, index=False)
         log(f"[+] Saved parallel results to {out_name}")
