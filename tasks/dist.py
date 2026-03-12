@@ -568,7 +568,7 @@ def main(
     write_baseline_rate=False,
     eval_batch_size=100,
     checkpoint=None,
-    do_filter=False,'
+    do_filter=False,
     checkpoint=None,
     do_filter=False,
     run_parallel=False,
