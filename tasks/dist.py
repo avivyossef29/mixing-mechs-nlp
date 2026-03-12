@@ -641,8 +641,8 @@ def main(
         causal_models=causal_models,
         sample_an_answerable_question=sample_answerable_question_template,
     )
-
-     if run_parallel:
+    
+    if run_parallel:
         log("[+] Running in PARALLEL mode (Residual vs State)")
         df = get_dist_parallel(
             model=model,
