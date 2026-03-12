@@ -553,7 +553,6 @@ def log(txt):
 #added
 @click.option("--run-parallel", is_flag=True, default=False, help="Run both residual and state patching simultaneously")
 #end
-@click.command()
 @click.option("--model-id", type=str, default="google/gemma-2-2b-it")
 @click.option("--schema-name", type=str, default="SCHEMA_BOXES")
 @click.option("--num-instances", type=int, default=20)
