@@ -524,6 +524,7 @@ def log(txt):
 
 
 @click.command()
+
 @click.option("--model-id", type=str, default="google/gemma-2-2b-it")
 @click.option("--schema-name", type=str, default="SCHEMA_BOXES")
 @click.option("--num-instances", type=int, default=20)
@@ -549,6 +550,10 @@ def log(txt):
     help="Optional checkpoint path to load model weights from",
 )
 @click.option("--do-filter", is_flag=True, default=False)
+#added
+@click.option("--run-parallel", is_flag=True, default=False, help="Run both residual and state patching simultaneously")
+#end
+
 def main(
     model_id,
     schema_name,
@@ -563,7 +568,10 @@ def main(
     write_baseline_rate=False,
     eval_batch_size=100,
     checkpoint=None,
+    do_filter=False,'
+    checkpoint=None,
     do_filter=False,
+    run_parallel=False,
 ):
     log(
         f"[+] Getting positional separability for {model_id} on {schema_name} with {num_instances} instances, {num_samples} samples, {layer} layer, {cat_indices_to_query} cat indices to query, {cat_to_query} cat to query, {messiness} messiness, {generate} generate"
@@ -634,20 +642,41 @@ def main(
         sample_an_answerable_question=sample_answerable_question_template,
     )
 
-    get_dist(
-        model,
-        tokenizer,
-        model_id,
-        train_ds,
-        schema,
-        num_instances,
-        num_samples,
-        layer,
-        cat_to_query,
-        messiness,
-        generate=generate,
-        num_fillers=num_fillers,
-    )
+ if run_parallel:
+        log("[+] Running in PARALLEL mode (Residual vs State)")
+        df = get_dist_parallel(
+            model=model,
+            tokenizer=tokenizer,
+            model_name=model_id,
+            train_ds=train_ds,
+            schema=schema,
+            num_samples=num_samples,
+            layer=layer,
+            cat_to_query=cat_to_query,
+            patch_all_indices=True 
+        )
+
+        # שמירת התוצאות של ההרצה המקבילה
+        out_name = f"binding_results/dists/parallel_{model_id.replace('/', '_')}_{num_instances}_{num_samples}_{layer}_{cat_to_query}_{schema.name}_mess{messiness}_fill{num_fillers}_{datetime.now().strftime('%Y%m%d')}.csv"
+        df.to_csv(out_name, index=False)
+        log(f"[+] Saved parallel results to {out_name}")
+
+    else:
+        log("[+] Running in standard single-patch mode")
+        get_dist(
+            model,
+            tokenizer,
+            model_id,
+            train_ds,
+            schema,
+            num_instances,
+            num_samples,
+            layer,
+            cat_to_query,
+            messiness,
+            generate=generate,
+            num_fillers=num_fillers,
+        )
 
     if not write_baseline_rate:
         return
