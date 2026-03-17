@@ -42,9 +42,13 @@ from grammar.task_to_causal_model import (
 )
 from grammar.schemas import (
     SCHEMA_FILLING_LIQUIDS,
+    SCHEMA_COLORED_SHAPES,
     SCHEMA_PEOPLE_AND_OBJECTS,
     SCHEMA_PROGRAMMING_PEOPLE_DICT,
+    SCHEMA_GEOMETRY,
     SCHEMA_MUSIC_PERFORMANCE,
+    SCHEMA_NUMBERED_CONTAINERS,
+    SCHEMA_ANIMAL_MOVEMENTS,
     SCHEMA_LAB_EXPERIMENTS,
     SCHEMA_CHEMISTRY_EXPERIMENTS,
     SCHEMA_TRANSPORTATION,
@@ -85,7 +89,11 @@ schemas = [
     SCHEMA_FILLING_LIQUIDS,
     SCHEMA_MUSIC_PERFORMANCE,
     SCHEMA_PEOPLE_AND_OBJECTS,
+    SCHEMA_NUMBERED_CONTAINERS,
+    SCHEMA_COLORED_SHAPES,
     SCHEMA_PROGRAMMING_PEOPLE_DICT,
+    SCHEMA_GEOMETRY,
+    SCHEMA_ANIMAL_MOVEMENTS,
     SCHEMA_LAB_EXPERIMENTS,
     SCHEMA_CHEMISTRY_EXPERIMENTS,
     SCHEMA_TRANSPORTATION,
@@ -96,17 +104,13 @@ schemas = [
 
 
 def get_end_str(model_id):
-    model_id_lower = model_id.lower() # Helper to keep logic clean
-    
     end_str = (
         "Answer:\nmodel\n"
-        if "gemma" in model_id_lower
+        if "gemma" in model_id
         else (
             "Answer:assistant\n\n"
-            if "llama" in model_id_lower or "zamba" in model_id_lower or "falcon" in model_id_lower or "mamba" in model_id_lower
-            else "Answer:\nassistant\n" if "qwen" in model_id_lower 
-            else "Answer:\n" if "bloomz" in model_id_lower  # Added BLOOMZ here
-            else "Oh no!"
+            if "llama" in model_id.lower()
+            else "Answer:\nassistant\n" if "qwen" in model_id.lower() else "Oh no!"
         )
     )
     assert end_str != "Oh no!", f"Model {model_id} not supported"
@@ -124,17 +128,12 @@ def format_prompt(tokenizer, prompt, dont=False) -> str:
     if dont:
         return prompt
 
-    # Check if tokenizer has a chat template
-    if hasattr(tokenizer, 'apply_chat_template') and hasattr(tokenizer, 'chat_template') and tokenizer.chat_template:
-        messages = [{"role": "user", "content": prompt}]
-        return tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )[5:]
-    else:
-        # Fallback for models without chat template (e.g., Bloomz)
-        return prompt
+    messages = [{"role": "user", "content": prompt}]
+    return tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True,
+    )[5:]
 
 
 from contextlib import contextmanager
@@ -154,12 +153,6 @@ def _get_layer_module(model, layer_idx: int):
     # GPT-2 / OPT style
     if hasattr(model, "transformer") and hasattr(model.transformer, "h"):
         return model.transformer.h[layer_idx]
-    # Mamba style (backbone.layers)
-    if hasattr(model, "backbone") and hasattr(model.backbone, "layers"):
-        return model.backbone.layers[layer_idx]
-    # Mamba style (backbone.blocks)
-    if hasattr(model, "backbone") and hasattr(model.backbone, "blocks"):
-        return model.backbone.blocks[layer_idx]
     raise ValueError("Unsupported model architecture: can't find layers container.")
 
 
@@ -170,20 +163,6 @@ def _num_layers(model) -> int:
         return len(model.gpt_neox.layers)
     if hasattr(model, "transformer") and hasattr(model.transformer, "h"):
         return len(model.transformer.h)
-    # Mamba style (backbone.layers)
-    if hasattr(model, "backbone") and hasattr(model.backbone, "layers"):
-        return len(model.backbone.layers)
-    # Mamba style (backbone.blocks)
-    if hasattr(model, "backbone") and hasattr(model.backbone, "blocks"):
-        return len(model.backbone.blocks)
-    # Fallback: try config attributes (similar to binding_model_wrappers.py)
-    if hasattr(model, "config"):
-        if hasattr(model.config, "n_layers"):
-            return model.config.n_layers
-        if hasattr(model.config, "num_hidden_layers"):
-            return model.config.num_hidden_layers
-        if hasattr(model.config, "n_layer"):
-            return model.config.n_layer
     raise ValueError("Unsupported model architecture: can't count layers.")
 
 
