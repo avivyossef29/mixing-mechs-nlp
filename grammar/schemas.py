@@ -489,7 +489,7 @@ SCHEMA_PROGRAMMING_PEOPLE_DICT = Schema(
         prefix="The following are dictionary variables in Python: ",
     ),
     matchers=[
-        lambda s: re.match(f"^ ?({'|'.join(map(re.escape, LETTERS))})$", s) is not None,
+        lambda s: re.match(f"^ ?({'|'.join(map(re.escape, VARIABLES))})$", s) is not None,
         lambda s: re.match(f"^ ?({'|'.join(map(re.escape, PEOPLE_NAMES))})$", s) is not None,
         lambda s: re.match(f"^ ?({'|'.join(map(re.escape, COUNTRIES))})$", s) is not None,
     ],
