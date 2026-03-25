@@ -2,8 +2,8 @@
 
 ### Resource Allocation ###
 #SBATCH --job-name=bloomz_patch
-#SBATCH --output=/vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/%x-%j.out        # Log file: bloomz_patch-12345.out
-#SBATCH --error=/vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/%x-%j.err         # Error file
+#SBATCH --output=%x-%j.out        # Log file
+#SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
 #SBATCH --time=12:00:00           # 12 hours max runtime
 #SBATCH --gres=gpu:1              # 1 GPU
@@ -11,24 +11,19 @@
 #SBATCH --mem=32G
 
 ### 1. Setup Environment ###
-source ~/.bashrc
-
-# Activate your specific environment (using the underscore name)
-conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/avivyossef/venv
+# source ~/.bashrc
+# conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/avivyossef/venv
 
 ### 2. Define Paths ###
-USERNAME="avivyossef"
-MY_USERNAME="inbalmoryles"
+USERNAME="inbalmoryles"
 
-# A. Base Volume Path (The Root)
+# הנתיב שבו נמצא הקוד שלך (לפי מה ששלחת)
+REPO_DIR="/specific/a/home/cc/students/csguests/${USERNAME}/mixing-mechs-nlp"
+
+# הנתיב שבו יישמרו התוצאות (ב-Volume שלך)
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
-MY_VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${MY_USERNAME}"
-
-# B. Derived Paths
-# We assume your code folder is named 'mixing-mechs-nlp' inside your volume
 MODEL_ID="bigscience/bloomz-3b"
-REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
-RESULTS_DIR="${MY_VOL_BASE}/${MODEL_ID}"
+RESULTS_DIR="${VOL_BASE}/${MODEL_ID}"
 
 # Ensure the results directory actually exists
 mkdir -p "$RESULTS_DIR"
@@ -39,11 +34,11 @@ cd "$REPO_DIR"
 
 echo "Running on node: $HOSTNAME"
 echo "Date: $(date)"
-echo "Base Volume:  $VOL_BASE"
 echo "Code Dir:     $REPO_DIR"
 echo "Saving results to: $RESULTS_DIR"
 
-python run_layer_experiments.py \
+# שימוש בפייתון של אביב להרצת הקוד שלך
+/vol/joberant_nobck/data/NLP_368307701_2526a/avivyossef/venv/bin/python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
     --num-instances 20 \
