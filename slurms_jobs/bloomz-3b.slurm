@@ -32,6 +32,7 @@ echo "Code Dir:     $REPO_DIR"
 echo "Saving results to: $RESULTS_DIR"
 
 # Using Aviv's Python directly
+export HF_HOME="/vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/hf_cache"
 /vol/joberant_nobck/data/NLP_368307701_2526a/avivyossef/venv/bin/python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
