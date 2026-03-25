@@ -1,46 +1,32 @@
 #!/bin/bash
 
 ### Resource Allocation ###
-#SBATCH --job-name=falcon-7b-instruct_patch
-#SBATCH --output=%x-%j.out        # Log file
-#SBATCH --error=%x-%j.err         # Error file
+#SBATCH --job-name=falcon-7b-patch
+#SBATCH --output=%x-%j.out
+#SBATCH --error=%x-%j.err
 #SBATCH --partition=studentkillable
-#SBATCH --time=20:00:00           # 20 hours max runtime
-#SBATCH --gres=gpu:1              # 1 GPU needed
+#SBATCH --time=20:00:00
+#SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 
 ### 1. Setup Environment ###
-# Activate the shared environment
+source /vol/joberant_nobck/data/NLP_368307701_2526a/avivyossef/miniconda3/etc/profile.d/conda.sh
 conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/avivyossef/venv
 
 ### 2. Define Paths ###
 USERNAME="inbalmoryles"
-
-# A. Base Volume Path (The Root)
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
-
-# B. Derived Paths
 MODEL_ID="tiiuae/falcon-7b-instruct"
 REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
-RESULTS_DIR="${VOL_BASE}/${MODEL_ID}"
+RESULTS_DIR="${VOL_BASE}/mixing-mechs-results/falcon-7b"
 
-# Ensure the results directory actually exists
 mkdir -p "$RESULTS_DIR"
-
-### 3. Execution ###
-# CRITICAL: We move to the code directory so imports work
 cd "$REPO_DIR"
 
-echo "Running on node: $HOSTNAME"
-echo "Date: $(date)"
-echo "Base Volume:  $VOL_BASE"
-echo "Code Dir:     $REPO_DIR"
-echo "Saving results to: $RESULTS_DIR"
+export HF_HOME="${VOL_BASE}/hf_cache"
 
-# Redirect HuggingFace downloads to your Volume
-export HF_HOME="/vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/hf_cache"
-
+### 3. Execution ###
 python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
