@@ -2,7 +2,7 @@
 
 ### Resource Allocation ###
 #SBATCH --job-name=falcon-h1-3B-instruct_patch
-#SBATCH --output=%x-%j.out        # Log file: falcon-h1-3B-instruct_patch-12345.out
+#SBATCH --output=%x-%j.out        # Log file
 #SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
 #SBATCH --time=24:00:00           # 24 hours max runtime
@@ -11,13 +11,11 @@
 #SBATCH --mem=32G
 
 ### 1. Setup Environment ###
-source ~/.bashrc
-
-# Activate your specific environment (using the underscore name)
-conda activate zamba-env
+# Activate the shared environment that worked for us
+conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/avivyossef/venv
 
 ### 2. Define Paths ###
-USERNAME="avivyossef"
+USERNAME="inbalmoryles"
 
 # A. Base Volume Path (The Root)
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
@@ -39,6 +37,9 @@ echo "Date: $(date)"
 echo "Base Volume:  $VOL_BASE"
 echo "Code Dir:     $REPO_DIR"
 echo "Saving results to: $RESULTS_DIR"
+
+# Redirect HuggingFace downloads to your Volume
+export HF_HOME="/vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/hf_cache"
 
 python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
