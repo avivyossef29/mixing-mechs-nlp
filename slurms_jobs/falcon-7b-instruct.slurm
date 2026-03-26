@@ -5,7 +5,7 @@
 #SBATCH --output=%x-%j.out        # Log file: falcon-7b-instruct_inbal-12345.out
 #SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
-#SBATCH --time=20:00:00           # 12 hours max runtime
+#SBATCH --time=20:00:00           # 20 hours max runtime
 #SBATCH --gres=gpu:1              # 1 GPU needed
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
@@ -13,20 +13,17 @@
 ### 1. Setup Environment ###
 source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/bin/activate
 
-# Activate your specific environment (using the underscore name)
+# Activate your specific environment
 conda activate mixing_env
 
 ### 2. Define Paths ###
 USERNAME="inbalmoryles"
-
-# A. Base Volume Path (The Root)
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
 
-# B. Derived Paths
-# We assume your code folder is named 'mixing-mechs-nlp' inside your volume
+# Model and Directories
 MODEL_ID="tiiuae/falcon-7b-instruct"
 REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
-RESULTS_DIR="${VOL_BASE}/${MODEL_ID}"
+RESULTS_DIR="${VOL_BASE}/results/${MODEL_ID}"
 
 # Ensure the results directory actually exists
 mkdir -p "$RESULTS_DIR"
