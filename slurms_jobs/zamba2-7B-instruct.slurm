@@ -1,12 +1,12 @@
 #!/bin/bash
 
 ### Resource Allocation ###
-#SBATCH --job-name=zamba2-7B_inbal
-#SBATCH --output=%x-%j.out        # Log file: zamba2-7B_inbal-12345.out
+#SBATCH --job-name=zamba2-v2_inbal
+#SBATCH --output=%x-%j.out        # Log file: zamba2-v2_inbal-12345.out
 #SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
 #SBATCH --time=20:00:00           # 20 hours max runtime
-#SBATCH --gres=gpu:1              # 1 GPU
+#SBATCH --gres=gpu:geforce_rtx_2080:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 
@@ -14,11 +14,13 @@
 source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/bin/activate
 conda activate mixing_env
 
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128
+
 ### 2. Define Paths ###
 USERNAME="inbalmoryles"
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
 
-MODEL_ID="Zyphra/Zamba2-7B-instruct"
+MODEL_ID="Zyphra/Zamba2-7B-Instruct-v2"
 REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
 RESULTS_DIR="${VOL_BASE}/results/${MODEL_ID}"
 
@@ -31,6 +33,7 @@ cd "$REPO_DIR"
 
 echo "Running on node: $HOSTNAME"
 echo "Date: $(date)"
+echo "Environment: $CONDA_DEFAULT_ENV"
 echo "Base Volume:  $VOL_BASE"
 echo "Code Dir:     $REPO_DIR"
 echo "Saving results to: $RESULTS_DIR"
