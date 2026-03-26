@@ -1,30 +1,26 @@
 #!/bin/bash
 
 ### Resource Allocation ###
-#SBATCH --job-name=mamba2_patch
-#SBATCH --output=%x-%j.out        # Log file: mamba2_patch-12345.out
+#SBATCH --job-name=mamba2_inbal
+#SBATCH --output=%x-%j.out        # Log file: mamba2_inbal-12345.out
 #SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
-#SBATCH --time=23:50:00           # 20 hours max runtime
+#SBATCH --time=20:00:00           # 20 hours max runtime
 #SBATCH --gres=gpu:1              # 1 GPU (CRITICAL for Mamba kernels!)
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 
 ### 1. Setup Environment ###
-source ~/.bashrc
-
-# Activate the Mamba2 GPU environment (where mamba-ssm kernels are installed)
-conda activate mamba2-gpu
+source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/bin/activate
+conda activate mixing_env
 
 ### 2. Define Paths ###
-USERNAME="avivyossef"
-
-# A. Base Volume Path (The Root)
+USERNAME="inbalmoryles"
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
 
-# B. Derived Paths
+MODEL_ID="AntonV/mamba2-2.7b-hf"
 REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
-RESULTS_DIR="${VOL_BASE}/mixing-mechs-results"
+RESULTS_DIR="${VOL_BASE}/results/${MODEL_ID}"
 
 # Ensure the results directory actually exists
 mkdir -p "$RESULTS_DIR"
@@ -38,13 +34,13 @@ echo "Date: $(date)"
 echo "Base Volume:  $VOL_BASE"
 echo "Code Dir:     $REPO_DIR"
 echo "Saving results to: $RESULTS_DIR"
-echo "Using Mamba2 GPU kernels (mamba-ssm installed in mamba2-gpu env)"
+echo "Note: Ensure Mamba2 GPU kernels (mamba-ssm) are installed in mixing_env"
 
 python run_layer_experiments.py \
-    --model-id "AntonV/mamba2-2.7b-hf" \
+    --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
-    --num-instances 20 \
-    --num-samples 1000 \
+    --num-instances 100 \
+    --num-samples 500 \
     --start-layer 58
 
 echo "Job finished at: $(date)"
