@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ### Resource Allocation ###
-#SBATCH --job-name=falcon-7b-instruct_patch
-#SBATCH --output=%x-%j.out        # Log file: falcon-7b-instruct_patch-12345.out
+#SBATCH --job-name=falcon-7b-instruct_inbal
+#SBATCH --output=%x-%j.out        # Log file: falcon-7b-instruct_inbal-12345.out
 #SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
 #SBATCH --time=20:00:00           # 12 hours max runtime
@@ -11,13 +11,13 @@
 #SBATCH --mem=32G
 
 ### 1. Setup Environment ###
-source ~/.bashrc
+source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/bin/activate
 
 # Activate your specific environment (using the underscore name)
-conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/avivyossef/venv
+conda activate mixing_env
 
 ### 2. Define Paths ###
-USERNAME="avivyossef"
+USERNAME="inbalmoryles"
 
 # A. Base Volume Path (The Root)
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
@@ -44,7 +44,7 @@ echo "Saving results to: $RESULTS_DIR"
 python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
-    --num-instances 20 \
+    --num-instances 100 \
     --num-samples 500 
 
 echo "Job finished at: $(date)"
