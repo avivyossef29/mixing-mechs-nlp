@@ -1,32 +1,26 @@
 #!/bin/bash
 
 ### Resource Allocation ###
-#SBATCH --job-name=zamba2-7B-instruct_patch
-#SBATCH --output=%x-%j.out        # Log file: zamba2-7B-instruct_patch-12345.out
+#SBATCH --job-name=zamba2-7B_inbal
+#SBATCH --output=%x-%j.out        # Log file: zamba2-7B_inbal-12345.out
 #SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
-#SBATCH --time=12:00:00           # 12 hours max runtime
+#SBATCH --time=20:00:00           # 20 hours max runtime
 #SBATCH --gres=gpu:1              # 1 GPU
-#SBATCH --cpus-per-task=2
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 
 ### 1. Setup Environment ###
-source ~/.bashrc
-
-# Activate your specific environment (using the underscore name)
-conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/avivyossef/venv
+source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/bin/activate
+conda activate mixing_env
 
 ### 2. Define Paths ###
-USERNAME="avivyossef"
-
-# A. Base Volume Path (The Root)
+USERNAME="inbalmoryles"
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
 
-# B. Derived Paths
-# We assume your code folder is named 'mixing-mechs-nlp' inside your volume
 MODEL_ID="Zyphra/Zamba2-7B-instruct"
 REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
-RESULTS_DIR="${VOL_BASE}/${MODEL_ID}"
+RESULTS_DIR="${VOL_BASE}/results/${MODEL_ID}"
 
 # Ensure the results directory actually exists
 mkdir -p "$RESULTS_DIR"
@@ -44,7 +38,7 @@ echo "Saving results to: $RESULTS_DIR"
 python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
-    --num-instances 20 \
-    --num-samples 1000 
+    --num-instances 100 \
+    --num-samples 500 
 
 echo "Job finished at: $(date)"
