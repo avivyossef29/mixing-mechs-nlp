@@ -6,7 +6,7 @@
 #SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
 #SBATCH --time=20:00:00           # 20 hours max runtime
-#SBATCH --gres=gpu:1              # 1 GPU
+#SBATCH --gres=gpu:geforce_rtx_2080:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 
