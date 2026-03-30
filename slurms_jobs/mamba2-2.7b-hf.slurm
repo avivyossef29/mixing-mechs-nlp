@@ -37,7 +37,7 @@ echo "Saving results to: $RESULTS_DIR"
 echo "Note: Ensure Mamba2 GPU kernels (mamba-ssm) are installed in mixing_env"
 
 export HF_HOME="/vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/hf_cache"
-python ../run_layer_experiments.py \
+python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
     --num-instances 20 \
