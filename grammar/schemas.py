@@ -932,7 +932,7 @@ SCHEMA_SPACE_OBSERVATIONS = Schema(
 
 SCHEMA_BOXES = Schema(
     name="boxes",
-    items={"Object": HOUSEHOLD_ITEMS, "Box": BOX_VARS},
+    items={"Object": HOUSEHOLD_ITEMS, "Box": BOX_VARS, "Marker": ["The"]},
     templates=Templates(
         prefix="",
         definitions={
@@ -952,10 +952,11 @@ SCHEMA_BOXES = Schema(
         capitalize_first_clause=True,
     ),
     max_new_tokens=5,
-    checker=lambda neural, causal: causal.lower().strip().split()[-1] in neural.lower().strip(),
+    checker=lambda neural, causal: causal.lower().strip().split() in neural.lower().strip(),
     matchers=[
         lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_ITEMS)})$", s) is not None,
         lambda s: re.match(r"^ ?box_\d{2,3}$", s) is not None,
+        lambda s: s.strip() == "The",
     ],
 )
 
