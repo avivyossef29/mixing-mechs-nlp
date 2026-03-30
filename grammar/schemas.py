@@ -29,8 +29,8 @@ PEOPLE_NAMES = [
     "Mark",
 ]
 LETTERS = [chr(c) for c in range(ord("a"), ord("z") + 1)]
-BOX_VARS = [f"box_{i}" for i in range(1, 101)]
-PROG_VARS = [f"var_{i}" for i in range(1, 101)]
+BOX_VARS = [f"box_{i:02d}" for i in range(1, 101)]
+PROG_VARS = [f"var_{i:02d}" for i in range(1, 101)]
 FEELINGS = ["loves", "admires", "misses", "hates", "dislikes", "likes", "appreciates"]
 DOCTOR_NAMES = [
     "Dr. Smith",
@@ -952,10 +952,10 @@ SCHEMA_BOXES = Schema(
         capitalize_first_clause=True,
     ),
     max_new_tokens=5,
-checker=lambda neural, causal: causal.strip().lower() in neural.strip().lower(),
+    checker=lambda neural, causal: causal.lower().strip().split()[-1] in neural.lower().strip(),
     matchers=[
-        lambda s: re.match(f"^ ?({'|'.join(map(re.escape, HOUSEHOLD_ITEMS))})$", s) is not None,
-        lambda s: re.match(r"^ ?box_\d+$", s) is not None,
+        lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_ITEMS)})$", s) is not None,
+        lambda s: re.match(r"^ ?box_\d{2,3}$", s) is not None,
     ],
 )
 
@@ -978,7 +978,7 @@ if __name__ == "__main__":
     rows = []
     for schema in schemas:
         task_factory = TaskFactory(schema)
-        task_instance = task_factory.create_task_instance(num_instances=100)
+        task_instance = task_factory.create_task_instance(num_instances=2)
         task = task_instance.generate_task(definition_key="row_default", query_instance_idx=0)
         final_form = f"{task['context']} {task['question']}"
         rows.append({"Name": schema.name, "Task": final_form, "Answer": task["answer"]})

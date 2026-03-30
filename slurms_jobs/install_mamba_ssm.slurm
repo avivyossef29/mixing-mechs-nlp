@@ -15,7 +15,7 @@
 source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/bin/activate
 
 # Activate your specific environment
-conda activate mixing_env
+conda activate mixing_pro_2026
 
 ### 2. Installation ###
 echo "Running on node: $HOSTNAME"
