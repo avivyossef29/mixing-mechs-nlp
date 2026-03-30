@@ -41,7 +41,7 @@ echo "Saving results to: $RESULTS_DIR"
 python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
-    --num-instances 100 \
-    --num-samples 500 
+    --num-instances 20 \
+    --num-samples 3000 
 
 echo "Job finished at: $(date)"

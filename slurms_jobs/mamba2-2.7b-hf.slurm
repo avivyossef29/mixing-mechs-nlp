@@ -39,8 +39,8 @@ echo "Note: Ensure Mamba2 GPU kernels (mamba-ssm) are installed in mixing_env"
 python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
-    --num-instances 100 \
-    --num-samples 500 \
+    --num-instances 20 \
+    --num-samples 3000 \
     --start-layer 58
 
 echo "Job finished at: $(date)"
