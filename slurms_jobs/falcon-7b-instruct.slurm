@@ -39,7 +39,7 @@ echo "Code Dir:     $REPO_DIR"
 echo "Saving results to: $RESULTS_DIR"
 
 export HF_HOME="/vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/hf_cache"
-python run_layer_experiments.py \
+python ../run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
     --num-instances 20 \
