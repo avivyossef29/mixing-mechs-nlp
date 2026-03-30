@@ -18,6 +18,7 @@ conda activate mixing_pro_2026
 
 ### 2. Define Paths ###
 USERNAME="inbalmoryles"
+VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
 
 # Model and Directories
 MODEL_ID="tiiuae/falcon-7b-instruct"

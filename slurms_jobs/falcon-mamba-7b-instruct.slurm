@@ -21,7 +21,7 @@ USERNAME="inbalmoryles"
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
 
 # Model and Directories
-MODEL_ID="tiiuae/falcon-7b-instruct"
+MODEL_ID="tiiuae/falcon-mamba-7b-instruct"
 REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
 RESULTS_DIR="${VOL_BASE}/results/${MODEL_ID}"
 

@@ -20,7 +20,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128
 USERNAME="inbalmoryles"
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
 
-MODEL_ID="tiiuae/falcon-7b-instruct"
+MODEL_ID="Zyphra/Zamba2-7B-instruct"
 REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
 RESULTS_DIR="${VOL_BASE}/results/${MODEL_ID}"
 
@@ -43,6 +43,6 @@ python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
     --num-instances 20 \
-    --num-samples 3000 
+    --num-samples 1000 
 
 echo "Job finished at: $(date)"

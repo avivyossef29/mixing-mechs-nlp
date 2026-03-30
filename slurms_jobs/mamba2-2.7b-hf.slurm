@@ -18,7 +18,7 @@ conda activate mixing_pro_2026
 USERNAME="inbalmoryles"
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
 
-MODEL_ID="tiiuae/falcon-7b-instruct"
+MODEL_ID="AntonV/mamba2-2.7b-hf"
 REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
 RESULTS_DIR="${VOL_BASE}/results/${MODEL_ID}"
 
