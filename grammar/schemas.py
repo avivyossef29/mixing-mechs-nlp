@@ -932,7 +932,7 @@ SCHEMA_SPACE_OBSERVATIONS = Schema(
 
 SCHEMA_BOXES = Schema(
     name="boxes",
-    items={"Object": HOUSEHOLD_ITEMS, "Box": BOX_VARS, "Marker": ["The"]},
+    items={"Object": HOUSEHOLD_ITEMS, "Box": BOX_VARS, "Marker": PEOPLE_NAMES},
     templates=Templates(
         prefix="",
         definitions={
@@ -956,8 +956,7 @@ SCHEMA_BOXES = Schema(
     matchers=[
         lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_ITEMS)})$", s) is not None,
         lambda s: re.match(r"^ ?box_\d{2,3}$", s) is not None,
-        lambda s: s.strip() == "The",
-    ],
+        lambda s: re.match(f"^ ?({'|'.join(map(re.escape, PEOPLE_NAMES))})$", s) is not None,    ],
 )
 
 if __name__ == "__main__":
