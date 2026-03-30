@@ -29,8 +29,8 @@ PEOPLE_NAMES = [
     "Mark",
 ]
 LETTERS = [chr(c) for c in range(ord("a"), ord("z") + 1)]
-BOX_VARS = [f"box_{i:02d}" for i in range(1, 101)]
-PROG_VARS = [f"var_{i:02d}" for i in range(1, 101)]
+BOX_VARS = [f"box_{i:02d}" for i in range(0, 100)]
+PROG_VARS = [f"var_{i:02d}" for i in range(0, 100)]
 FEELINGS = ["loves", "admires", "misses", "hates", "dislikes", "likes", "appreciates"]
 DOCTOR_NAMES = [
     "Dr. Smith",

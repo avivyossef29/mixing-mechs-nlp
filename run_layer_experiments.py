@@ -143,30 +143,42 @@ def run_experiment_for_layer(
         answer_indices = []
         keyload_index = None
         payload_index = None
-        for i, token in enumerate(prompt_str_tokenized):
+        
+        for i in range(len(prompt_str_tokenized)):
             if "qwen" in model_id_str.lower() and i < 10:
                 continue
 
-            if schema.matchers[cat_to_query](token):
-                answer_indices.append(i)
-
-                if prompt_str_tokenized[i].lower().strip() in metadata["keyload"].lower().strip():
-                    keyload_index = len(answer_indices) - 1
-
-                if prompt_str_tokenized[i].lower().strip() in metadata["payload"].lower().strip():
-                    payload_index = len(answer_indices) - 1
-
-        assert (
-            len(answer_indices) == num_instances
-        ), f"Expected {num_instances} answer indices, got {len(answer_indices)}.\nPrompt_str_tokenized: {prompt_str_tokenized}.\n{[prompt_str_tokenized[i] for i in answer_indices]}."
-        assert (
-            keyload_index is not None
-        ), f"Keyload [{metadata['keyload']}] index is None. Prompt_str_tokenized: {prompt_str_tokenized}.\n{[prompt_str_tokenized[i] for i in answer_indices]}."
-
-        assert (
-            payload_index is not None
-        ), f"Payload [{metadata['payload']}] index is None. Prompt_str_tokenized: {prompt_str_tokenized}.\n{[prompt_str_tokenized[i] for i in answer_indices]}."
-
+            matched_text = None
+            # בדיקה של 1 עד 4 טוקנים אחורה (מכסה את כל סוגי הטוקנייזרים עבור box_01)
+            for window_size in range(1, 5):
+                start_tok_idx = max(0, i - window_size + 1)
+                combined = "".join(prompt_str_tokenized[start_tok_idx:i+1])
+                # ניקוי סימני רווח מיוחדים של טוקנייזרים (כמו Ġ או  )
+                cleaned = combined.replace(' ', '').replace('Ġ', '').strip()
+                
+                if schema.matchers[cat_to_query](cleaned):
+                    matched_text = cleaned
+                    break
+            
+            if matched_text is not None:
+                if len(answer_indices) > 0 and answer_indices[-1] == i - 1:
+                    answer_indices[-1] = i
+                else:
+                    answer_indices.append(i)
+                
+            current_entity_idx = len(answer_indices) - 1
+            if metadata.get("keyload") and matched_text.lower() == str(metadata["keyload"]).lower().strip():
+                keyload_index = current_entity_idx
+            if metadata.get("payload") and matched_text.lower() == str(metadata["payload"]).lower().strip():
+                payload_index = current_entity_idx    
+            
+        assert len(answer_indices) == num_instances, (
+            f"Expected {num_instances} entities, but found {len(answer_indices)}.\n"
+            f"Last tokens of identified boxes: {[prompt_str_tokenized[i] for i in answer_indices]}"
+        )
+        assert keyload_index is not None, f"Could not find Keyload [{metadata['keyload']}] in the prompt."
+        assert payload_index is not None, f"Could not find Payload [{metadata['payload']}] in the prompt."
+        
         pos_index = metadata["dst_index"]
 
         with run_with_cf_hf(
