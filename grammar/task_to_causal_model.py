@@ -1193,7 +1193,7 @@ def define_by_key(
 ) -> str:
     """Generates a context string using the specified definition key."""
     num_instances = len(data)
-    template = schema.templates.definitions[key]
+    template = schema.templates.definitions.get(key, schema.templates.definitions.get("row_default"))
 
     # Check if this is a column-style definition (uses _list format)
     if any(f"{{{cat}_list}}" in template for cat in schema.categories):
@@ -1224,7 +1224,7 @@ def define_by_key(
 def define_by_key_with_fillers(schema: Schema, data: List[List[str]], key: str) -> str:
     """Generates a context string using the specified definition key."""
     num_instances = len(data)
-    template = schema.templates.definitions[key]
+    template = schema.templates.definitions.get(key, schema.templates.definitions.get("row_default"))
 
     # Check if this is a column-style definition (uses _list format)
     if any(f"{{{cat}_list}}" in template for cat in schema.categories):
@@ -2814,3 +2814,4 @@ def multi_order_multi_schema_task_to_lookbacks_generic_causal_model_with_pdfs(
     mechanisms["raw_output"] = lambda *args: " ".join(args)
 
     return CausalModel(variables, values, parents, mechanisms)
+
