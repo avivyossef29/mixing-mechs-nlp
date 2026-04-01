@@ -15,7 +15,7 @@
 source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/bin/activate
 
 # Activate your specific environment
-conda activate mixing_pro_2026
+conda activate mixing_pro_2026`nsource ~/.bashrc`nsource ~/.bashrc
 
 ### 2. Installation ###
 echo "Running on node: $HOSTNAME"
@@ -38,3 +38,6 @@ python -c 'import transformers; print("SUCCESS: transformers is ready!")'
 python -c 'import mamba_ssm; print("SUCCESS: mamba_ssm is ready!")' || echo "WARNING: mamba_ssm failed (needed only for Mamba/Zamba)"
 
 echo "Job completed at: $(date)"
+
+
+

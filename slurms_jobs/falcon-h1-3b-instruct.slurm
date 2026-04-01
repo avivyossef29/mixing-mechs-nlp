@@ -14,7 +14,7 @@
 source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/bin/activate
 
 # Activate your specific environment
-conda activate mixing_pro_2026
+conda activate mixing_pro_2026`nsource ~/.bashrc`nsource ~/.bashrc
 
 ### 2. Define Paths ###
 USERNAME="inbalmoryles"
@@ -46,3 +46,6 @@ python run_layer_experiments.py \
     --num-samples 3000 
 
 echo "Job finished at: $(date)"
+
+
+
