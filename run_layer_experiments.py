@@ -169,9 +169,9 @@ def run_experiment_for_layer(
             current_entity_idx = len(answer_indices) - 1
             if metadata.get("keyload") and matched_text is not None and matched_text.lower() == str(metadata["keyload"]).lower().strip():
                 keyload_index = current_entity_idx
-            if metadata.get("payload") and matched_text.lower() == str(metadata["payload"]).lower().strip():
-                payload_index = current_entity_idx    
-            
+            if metadata.get("payload") and matched_text is not None and matched_text.lower() == str(metadata["payload"]).lower().strip():
+                payload_index = current_entity_idx
+                        
         assert len(answer_indices) == num_instances, (
             f"Expected {num_instances} entities, but found {len(answer_indices)}.\n"
             f"Last tokens of identified boxes: {[prompt_str_tokenized[i] for i in answer_indices]}"

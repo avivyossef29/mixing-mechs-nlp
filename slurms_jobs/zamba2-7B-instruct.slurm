@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ### Resource Allocation ###
-#SBATCH --job-name=bloomz-3b_inbal
+#SBATCH --job-name=Zamba2-7B-instruct_inbal
 #SBATCH --output=%x-%j.out        # Log file: bloomz-3b_inbal-12345.out
 #SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
@@ -11,8 +11,8 @@
 #SBATCH --mem=32G
 
 ### 1. Setup Environment ###
-source ~/.bashrc
 source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/bin/activate
+source ~/.bashrc
 
 # Activate your specific environment
 conda activate mixing_pro_2026

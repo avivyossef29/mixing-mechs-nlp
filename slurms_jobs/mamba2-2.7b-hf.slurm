@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ### Resource Allocation ###
-#SBATCH --job-name=bloomz-3b_inbal
+#SBATCH --job-name=mamba2-2.7b-hf_inbal
 #SBATCH --output=%x-%j.out        # Log file: bloomz-3b_inbal-12345.out
 #SBATCH --error=%x-%j.err         # Error file
 #SBATCH --partition=studentkillable
