@@ -11,11 +11,10 @@
 #SBATCH --mem=32G
 
 ### 1. Setup Environment ###
-source ~/.bashrc
 source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/bin/activate
-
-# Activate your specific environment
 conda activate mixing_pro_2026
+pip install --upgrade --force-reinstall causal-conv1d mamba-ssm --no-cache-dir
+source ~/.bashrc
 
 ### 2. Define Paths ###
 USERNAME="inbalmoryles"
