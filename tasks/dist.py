@@ -290,6 +290,90 @@ def run_with_cf_hf(
             model.train()
 
 
+@contextmanager
+def patch_component_cf(
+    model,
+    tokenizer,
+    normal_str,
+    cf_str,
+    layer_idx=17,
+    component="mamba",
+    token_positions=None,
+    device=None,
+    alpha=1.0,
+):
+    """
+    Patch a single component's output (mamba or attention) at `layer_idx`
+    with the CF's component output at the same layer.
+
+    Unlike run_with_cf_hf (which patches the full residual stream input),
+    this patches only one component's contribution, allowing us to test
+    whether mamba or attention carries the binding signal.
+
+    Usage:
+        with patch_component_cf(model, tok, prompt, cf, layer_idx=17, component="mamba"):
+            logits = model(input_ids).logits
+    """
+    if token_positions is None:
+        token_positions = [-1]
+
+    device = device or next(model.parameters()).device
+    was_training = model.training
+    model.eval()
+
+    enc_cf = tokenizer(cf_str, return_tensors="pt").to(device)
+    enc_norm = tokenizer(normal_str, return_tensors="pt").to(device)
+
+    layer = model.model.layers[layer_idx]
+    if component == "mamba":
+        target = layer.mamba
+    elif component == "attention":
+        target = layer.self_attn
+    else:
+        raise ValueError(f"Unknown component: {component}. Use 'mamba' or 'attention'.")
+
+    # Step 1: Run CF forward, capture the component's output at this layer
+    cf_output_cache = {}
+
+    def capture_hook(module, input, output):
+        if isinstance(output, tuple):
+            cf_output_cache["val"] = output[0].detach().clone()
+        else:
+            cf_output_cache["val"] = output.detach().clone()
+
+    h_capture = target.register_forward_hook(capture_hook)
+    with torch.no_grad():
+        model(**enc_cf)
+    h_capture.remove()
+
+    # Compute absolute token positions
+    T_cf = enc_cf["input_ids"].shape[1]
+    T_norm = enc_norm["input_ids"].shape[1]
+    pos_cf = _to_abs_positions(T_cf, token_positions)
+    pos_norm = _to_abs_positions(T_norm, token_positions)
+
+    cached_vals = cf_output_cache["val"][0, pos_cf, :].detach() * alpha  # [P, D]
+
+    # Step 2: Install replacement hook for the normal forward pass
+    def replace_hook(module, input, output):
+        if isinstance(output, tuple):
+            new_out = output[0].clone()
+            new_out[0, pos_norm, :] = cached_vals.to(device=new_out.device, dtype=new_out.dtype)
+            return (new_out,) + output[1:]
+        new_out = output.clone()
+        new_out[0, pos_norm, :] = cached_vals.to(device=new_out.device, dtype=new_out.dtype)
+        return new_out
+
+    h_replace = target.register_forward_hook(replace_hook)
+
+    try:
+        yield
+    finally:
+        h_replace.remove()
+        if was_training:
+            model.train()
+
+
 def to_str_tokens(tokenizer, prompt):
     tokens = tokenizer(prompt, return_tensors="pt")["input_ids"][0]
     return [x.replace("▁", " ").replace("Ġ", " ") for x in tokenizer.convert_ids_to_tokens(tokens)]
