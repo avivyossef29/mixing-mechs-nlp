@@ -945,17 +945,18 @@ SCHEMA_BOXES = Schema(
                 answer_category="Object",
             ),
             "Q:Object A:Box": Query(
-                question="Respond in one word, only the answer and nothing else: Which box is the {Object} in?",
+                question="Respond in one word, only the answer and nothing else: Which box is the {Object} in? Answer: box_",
                 answer_category="Box",
             ),
         },
         capitalize_first_clause=True,
     ),
     max_new_tokens=5,
-    checker=lambda neural, causal: causal.lower().strip().split() in neural.lower().strip(),
+    checker=lambda neural, causal: causal.split('_')[-1] in neural.strip(),
     matchers=[
         lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_ITEMS)})$", s) is not None,
-        lambda s: re.match(r"^ ?box_\d{2,3}$", s) is not None,],
+        lambda s: re.match(r"^ ?\d{2,3}$", s) is not None,
+    ],
 )
 
 if __name__ == "__main__":
