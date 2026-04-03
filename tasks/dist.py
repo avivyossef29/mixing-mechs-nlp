@@ -374,6 +374,114 @@ def patch_component_cf(
             model.train()
 
 
+@contextmanager
+def patch_component_cf_multi_layer(
+    model,
+    tokenizer,
+    normal_str,
+    cf_str,
+    layer_indices=None,
+    component="mamba",
+    token_positions=None,
+    device=None,
+    alpha=1.0,
+):
+    """
+    Patch a component's output across MULTIPLE layers simultaneously.
+
+    Same as patch_component_cf but patches at all layers in `layer_indices`,
+    giving the cumulative effect of that component across the network.
+    If layer_indices is None, patches ALL layers.
+
+    Usage:
+        # Patch attention at all layers
+        with patch_component_cf_multi_layer(model, tok, prompt, cf, component="attention"):
+            logits = model(input_ids).logits
+
+        # Patch mamba at specific layers
+        with patch_component_cf_multi_layer(model, tok, prompt, cf,
+                layer_indices=[14,15,16], component="mamba"):
+            logits = model(input_ids).logits
+    """
+    if token_positions is None:
+        token_positions = [-1]
+    if layer_indices is None:
+        layer_indices = list(range(_num_layers(model)))
+
+    device = device or next(model.parameters()).device
+    was_training = model.training
+    model.eval()
+
+    enc_cf = tokenizer(cf_str, return_tensors="pt").to(device)
+    enc_norm = tokenizer(normal_str, return_tensors="pt").to(device)
+
+    # Get target modules for all layers
+    targets = []
+    for li in layer_indices:
+        layer = model.model.layers[li]
+        if component == "mamba":
+            targets.append(layer.mamba)
+        elif component == "attention":
+            targets.append(layer.self_attn)
+        else:
+            raise ValueError(f"Unknown component: {component}. Use 'mamba' or 'attention'.")
+
+    # Step 1: Run CF forward, capture the component's output at ALL layers
+    cf_output_cache = {}
+
+    capture_hooks = []
+    for i, target in enumerate(targets):
+        def make_capture_hook(idx):
+            def hook(module, input, output):
+                if isinstance(output, tuple):
+                    cf_output_cache[idx] = output[0].detach().clone()
+                else:
+                    cf_output_cache[idx] = output.detach().clone()
+            return hook
+        capture_hooks.append(target.register_forward_hook(make_capture_hook(i)))
+
+    with torch.no_grad():
+        model(**enc_cf)
+
+    for h in capture_hooks:
+        h.remove()
+
+    # Compute absolute token positions
+    T_cf = enc_cf["input_ids"].shape[1]
+    T_norm = enc_norm["input_ids"].shape[1]
+    pos_cf = _to_abs_positions(T_cf, token_positions)
+    pos_norm = _to_abs_positions(T_norm, token_positions)
+
+    # Cache values for each layer
+    cached_vals = {}
+    for i in cf_output_cache:
+        cached_vals[i] = cf_output_cache[i][0, pos_cf, :].detach() * alpha
+
+    # Step 2: Install replacement hooks at ALL layers
+    replace_hooks = []
+    for i, target in enumerate(targets):
+        cv = cached_vals[i]
+        def make_replace_hook(cached):
+            def hook(module, input, output):
+                if isinstance(output, tuple):
+                    new_out = output[0].clone()
+                    new_out[0, pos_norm, :] = cached.to(device=new_out.device, dtype=new_out.dtype)
+                    return (new_out,) + output[1:]
+                new_out = output.clone()
+                new_out[0, pos_norm, :] = cached.to(device=new_out.device, dtype=new_out.dtype)
+                return new_out
+            return hook
+        replace_hooks.append(target.register_forward_hook(make_replace_hook(cv)))
+
+    try:
+        yield
+    finally:
+        for h in replace_hooks:
+            h.remove()
+        if was_training:
+            model.train()
+
+
 def to_str_tokens(tokenizer, prompt):
     tokens = tokenizer(prompt, return_tensors="pt")["input_ids"][0]
     return [x.replace("▁", " ").replace("Ġ", " ") for x in tokenizer.convert_ids_to_tokens(tokens)]
