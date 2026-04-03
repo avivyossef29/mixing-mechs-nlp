@@ -324,13 +324,10 @@ def patch_component_cf(
     enc_cf = tokenizer(cf_str, return_tensors="pt").to(device)
     enc_norm = tokenizer(normal_str, return_tensors="pt").to(device)
 
-    layer = model.model.layers[layer_idx]
-    if component == "mamba":
-        target = layer.mamba
-    elif component == "attention":
-        target = layer.self_attn
-    else:
-        raise ValueError(f"Unknown component: {component}. Use 'mamba' or 'attention'.")
+    layer = _get_layer_module(model, layer_idx)
+    target = _get_component_module(layer, component)
+    if target is None:
+        raise ValueError(f"Layer {layer_idx} has no {component} component.")
 
     # Step 1: Run CF forward, capture the component's output at this layer
     cf_output_cache = {}
@@ -374,6 +371,32 @@ def patch_component_cf(
             model.train()
 
 
+def _get_component_module(layer, component):
+    """
+    Find the mamba or attention submodule within a layer.
+    Supports Falcon-H1 (parallel) and Zamba2 (alternating).
+    Returns None if the component doesn't exist in this layer.
+    """
+    if component == "mamba":
+        # Falcon-H1: layer.mamba
+        if hasattr(layer, "mamba"):
+            return layer.mamba
+        # Zamba2 hybrid layer: layer.mamba_decoder.mamba
+        if hasattr(layer, "mamba_decoder") and hasattr(layer.mamba_decoder, "mamba"):
+            return layer.mamba_decoder.mamba
+        return None
+    elif component == "attention":
+        # Falcon-H1: layer.self_attn
+        if hasattr(layer, "self_attn"):
+            return layer.self_attn
+        # Zamba2 hybrid layer: layer.shared_transformer.self_attn
+        if hasattr(layer, "shared_transformer") and hasattr(layer.shared_transformer, "self_attn"):
+            return layer.shared_transformer.self_attn
+        return None
+    else:
+        raise ValueError(f"Unknown component: {component}. Use 'mamba' or 'attention'.")
+
+
 @contextmanager
 def patch_component_cf_multi_layer(
     model,
@@ -415,16 +438,18 @@ def patch_component_cf_multi_layer(
     enc_cf = tokenizer(cf_str, return_tensors="pt").to(device)
     enc_norm = tokenizer(normal_str, return_tensors="pt").to(device)
 
-    # Get target modules for all layers
+    # Get target modules for all layers (supports Falcon-H1 and Zamba2)
     targets = []
+    skipped = []
     for li in layer_indices:
-        layer = model.model.layers[li]
-        if component == "mamba":
-            targets.append(layer.mamba)
-        elif component == "attention":
-            targets.append(layer.self_attn)
+        layer = _get_layer_module(model, li)
+        mod = _get_component_module(layer, component)
+        if mod is not None:
+            targets.append(mod)
         else:
-            raise ValueError(f"Unknown component: {component}. Use 'mamba' or 'attention'.")
+            skipped.append(li)
+    if skipped:
+        print(f"[patch_component_cf_multi_layer] Skipped layers {skipped} (no {component} component)")
 
     # Step 1: Run CF forward, capture the component's output at ALL layers
     cf_output_cache = {}
