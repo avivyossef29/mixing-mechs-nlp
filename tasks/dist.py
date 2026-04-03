@@ -451,19 +451,37 @@ def patch_component_cf_multi_layer(
     if skipped:
         print(f"[patch_component_cf_multi_layer] Skipped layers {skipped} (no {component} component)")
 
+    # Handle shared modules (e.g. Zamba2's shared_transformer.self_attn is the
+    # same Python object across all hybrid layers). We group by module identity
+    # and use a call counter so each invocation captures/replaces correctly.
+    from collections import defaultdict
+    module_to_call_indices = defaultdict(list)  # id(module) -> [0, 1, 2, ...]
+    for i, mod in enumerate(targets):
+        module_to_call_indices[id(mod)].append(i)
+
+    unique_modules = {}  # id(module) -> module
+    for mod in targets:
+        unique_modules[id(mod)] = mod
+
     # Step 1: Run CF forward, capture the component's output at ALL layers
     cf_output_cache = {}
 
     capture_hooks = []
-    for i, target in enumerate(targets):
-        def make_capture_hook(idx):
+    for mod_id, call_indices in module_to_call_indices.items():
+        module = unique_modules[mod_id]
+        counter = [0]
+        def make_capture_hook(indices, cnt):
             def hook(module, input, output):
-                if isinstance(output, tuple):
-                    cf_output_cache[idx] = output[0].detach().clone()
-                else:
-                    cf_output_cache[idx] = output.detach().clone()
+                call_num = cnt[0]
+                if call_num < len(indices):
+                    idx = indices[call_num]
+                    if isinstance(output, tuple):
+                        cf_output_cache[idx] = output[0].detach().clone()
+                    else:
+                        cf_output_cache[idx] = output.detach().clone()
+                cnt[0] += 1
             return hook
-        capture_hooks.append(target.register_forward_hook(make_capture_hook(i)))
+        capture_hooks.append(module.register_forward_hook(make_capture_hook(call_indices, counter)))
 
     with torch.no_grad():
         model(**enc_cf)
@@ -484,19 +502,26 @@ def patch_component_cf_multi_layer(
 
     # Step 2: Install replacement hooks at ALL layers
     replace_hooks = []
-    for i, target in enumerate(targets):
-        cv = cached_vals[i]
-        def make_replace_hook(cached):
+    for mod_id, call_indices in module_to_call_indices.items():
+        module = unique_modules[mod_id]
+        counter = [0]
+        def make_replace_hook(indices, cnt, cvals):
             def hook(module, input, output):
-                if isinstance(output, tuple):
-                    new_out = output[0].clone()
+                call_num = cnt[0]
+                cnt[0] += 1
+                if call_num < len(indices):
+                    idx = indices[call_num]
+                    cached = cvals[idx]
+                    if isinstance(output, tuple):
+                        new_out = output[0].clone()
+                        new_out[0, pos_norm, :] = cached.to(device=new_out.device, dtype=new_out.dtype)
+                        return (new_out,) + output[1:]
+                    new_out = output.clone()
                     new_out[0, pos_norm, :] = cached.to(device=new_out.device, dtype=new_out.dtype)
-                    return (new_out,) + output[1:]
-                new_out = output.clone()
-                new_out[0, pos_norm, :] = cached.to(device=new_out.device, dtype=new_out.dtype)
-                return new_out
+                    return new_out
+                return output
             return hook
-        replace_hooks.append(target.register_forward_hook(make_replace_hook(cv)))
+        replace_hooks.append(module.register_forward_hook(make_replace_hook(call_indices, counter, cached_vals)))
 
     try:
         yield
