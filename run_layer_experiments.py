@@ -143,18 +143,43 @@ def run_experiment_for_layer(
         answer_indices = []
         keyload_index = None
         payload_index = None
+        
+        # Track if we are currently inside a multi-token match
+        in_match = False
+        
         for i, token in enumerate(prompt_str_tokenized):
             if "qwen" in model_id_str.lower() and i < 10:
                 continue
 
-            if schema.matchers[cat_to_query](token):
-                answer_indices.append(i)
+            is_match = schema.matchers[cat_to_query](token)
+            
+            # If this token matches our regex
+            if is_match:
+                if not in_match:
+                    # First token of a new match, add it
+                    answer_indices.append(i)
+                    in_match = True
+                else:
+                    # We are in the middle of a multi-token match (e.g., "10" and "0").
+                    # Update the index to point to the LAST token of this entity.
+                    answer_indices[-1] = i
+                    
+                # Check for keyload/payload matches
+                # We need to construct the full string to check accurately
+                current_answer_idx = len(answer_indices) - 1
+                
+                # Check if this token matches keyload/payload. 
+                # Note: If tokenized into pieces, this simple 'in' check might be brittle,
+                # but it matches your original logic.
+                if token.lower().strip() in metadata["keyload"].lower().strip():
+                    keyload_index = current_answer_idx
 
-                if prompt_str_tokenized[i].lower().strip() in metadata["keyload"].lower().strip():
-                    keyload_index = len(answer_indices) - 1
-
-                if prompt_str_tokenized[i].lower().strip() in metadata["payload"].lower().strip():
-                    payload_index = len(answer_indices) - 1
+                if token.lower().strip() in metadata["payload"].lower().strip():
+                    payload_index = current_answer_idx
+                    
+            else:
+                # Token doesn't match, reset flag
+                in_match = False
 
         assert (
             len(answer_indices) == num_instances
@@ -258,8 +283,8 @@ def main():
     parser.add_argument(
         "--num-instances",
         type=int,
-        default=20,
-        help="Number of instances (default: 20)",
+        default=100,
+        help="Number of instances (default: 100)",
     )
     parser.add_argument(
         "--num-samples",

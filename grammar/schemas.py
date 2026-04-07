@@ -1,4 +1,7 @@
 import re
+import string
+import itertools
+import re
 from grammar.grammar import Schema, Templates, Query, TaskFactory
 
 # from grammar import Schema, Templates, Query, TaskFactory
@@ -928,9 +931,24 @@ SCHEMA_SPACE_OBSERVATIONS = Schema(
     checker=lambda neural, causal: causal.lower().strip().split()[-1] in neural.lower().strip(),
 )
 
+
+
+# 1. Expand the object pool to guarantee at least 100 unique items
+EXTRA_ITEMS = [
+    "laptop", "tablet", "router", "speaker", "lamp",
+    "pillow", "blanket", "towel", "soap", "shampoo",
+    "toothbrush", "brush", "comb", "wallet", "purse",
+    "backpack", "umbrella", "keyboard", "mouse", "monitor"
+]
+EXTENDED_HOUSEHOLD_ITEMS = HOUSEHOLD_ITEMS + EXTRA_ITEMS
+
+# 2. UPDATED: Generate 100 unique box identifiers as strings of numbers ("1", "2"..."100")
+EXTENDED_BOXES = [str(i) for i in range(1, 101)]
+
+# 3. Define the updated schema
 SCHEMA_BOXES = Schema(
     name="boxes",
-    items={"Object": HOUSEHOLD_ITEMS, "Box": [x.upper() for x in LETTERS]},
+    items={"Object": EXTENDED_HOUSEHOLD_ITEMS, "Box": EXTENDED_BOXES},
     templates=Templates(
         prefix="",
         definitions={
@@ -950,12 +968,15 @@ SCHEMA_BOXES = Schema(
         capitalize_first_clause=True,
     ),
     max_new_tokens=3,
-    checker=lambda neural, causal: causal
-    in re.search("(Box )?([A-Z])", neural.strip()).group(2).strip(),  # Checker for when querying the letters
-    # checker=lambda neural, causal: causal.strip().lower() in neural.strip().lower(), # Checker for when querying the items
+    # UPDATED: Safe regex check to prevent crashes on bad model outputs
+    checker=lambda neural, causal: (
+        (match := re.search(r"(Box )?(\d+)", neural.strip())) 
+        and causal in match.group(2).strip()
+    ),
     matchers=[
-        lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_ITEMS)})$", s) is not None,
-        lambda s: re.match("^ [A-Z]$", s) is not None,
+        lambda s: re.match(f"^ ?({'|'.join(EXTENDED_HOUSEHOLD_ITEMS)})$", s) is not None,
+        # UPDATED: Regex altered to \d+ to match numbers instead of letters
+        lambda s: re.match(r"^ ?\d+$", s) is not None,
     ],
 )
 
