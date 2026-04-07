@@ -24,7 +24,7 @@ class Schema:
     items: Dict[str, List[str]]
     templates: Templates
     categories: List[str] = field(init=False)
-    max_new_tokens: int = 1
+    max_new_tokens: int = 5
     checker: Callable[[str, str], bool] = lambda neural, causal: causal.lower().strip() in neural.lower().strip()
     matchers: Optional[list] = None
 
