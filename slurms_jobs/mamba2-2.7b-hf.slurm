@@ -12,7 +12,7 @@
 
 ### 1. Setup Environment ###
 source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/etc/profile.d/conda.sh
-conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/envs/transformers-env
+conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/envs/mamba2-gpu
 
 ### 2. Define Paths ###
 USERNAME="inbalmoryles"
