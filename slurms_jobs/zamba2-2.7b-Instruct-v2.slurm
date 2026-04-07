@@ -11,11 +11,9 @@
 #SBATCH --mem=32G
 
 ### 1. Setup Environment ###
-### 1. Setup Environment ###
-source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/bin/activate
-conda activate mixing_pro_2026
-pip install --upgrade --force-reinstall causal-conv1d mamba-ssm --no-cache-dir
-source ~/.bashrc
+source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/etc/profile.d/conda.sh
+conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/envs/transformers-env
+
 
 ### 2. Define Paths ###
 USERNAME="inbalmoryles"
@@ -28,8 +26,14 @@ RESULTS_DIR="${VOL_BASE}/results/${MODEL_ID}"
 
 # Ensure the results directory actually exists
 export HF_HOME="${VOL_BASE}/hf_cache"
+export TMPDIR="${VOL_BASE}/tmp"
+export PIP_CACHE_DIR="${VOL_BASE}/pip_cache"
+export HF_TOKEN=$(cat "${VOL_BASE}/hf_token.txt")
+
 mkdir -p "$HF_HOME"
+mkdir -p "$TMPDIR"
 mkdir -p "$RESULTS_DIR"
+mkdir -p "$PIP_CACHE_DIR"
 
 ### 3. Execution ###
 # CRITICAL: We move to the code directory so imports work
@@ -44,7 +48,7 @@ echo "Saving results to: $RESULTS_DIR"
 python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
-    --num-instances 20 \
+    --num-instances 200 \
     --num-samples 1000 \
     --hf-token "$HF_TOKEN"
 
