@@ -1,49 +1,42 @@
 #!/bin/bash
-
-### Resource Allocation ###
 #SBATCH --job-name=gemma-2-2b-it_inbal
-#SBATCH --output=%x-%j.out        # Log file: bloomz-3b_inbal-12345.out
-#SBATCH --error=%x-%j.err         # Error file
+#SBATCH --output=%x-%j.out
+#SBATCH --error=%x-%j.err
 #SBATCH --partition=studentkillable
-#SBATCH --time=20:00:00           # 20 hours max runtime
-#SBATCH --gres=gpu:1              # 1 GPU
+#SBATCH --time=20:00:00
+#SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 
-### 1. Setup Environment ###
-source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/etc/profile.d/conda.sh
-conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/envs/transformers-env
+# 1. Environment & Path Setup
+export USERNAME="inbalmoryles"
+export VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
+export REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
 
-### 2. Define Paths ###
-USERNAME="inbalmoryles"
-VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
+# Using explicit python path from the Volume environment
+export MY_PYTHON="${VOL_BASE}/envs/transformers-env/bin/python"
 
-# Model and Directories
+# Model & Results config
 MODEL_ID="google/gemma-2-2b-it"
-REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
 RESULTS_DIR="${VOL_BASE}/results/${MODEL_ID}"
 
-# Ensure the results directory actually exists
+# HF Configuration
 export HF_HOME="${VOL_BASE}/hf_cache"
 export TMPDIR="${VOL_BASE}/tmp"
-export PIP_CACHE_DIR="${VOL_BASE}/pip_cache"
 export HF_TOKEN=$(cat "${VOL_BASE}/hf_token.txt")
 
-mkdir -p "$HF_HOME"
-mkdir -p "$TMPDIR"
-mkdir -p "$RESULTS_DIR"
-mkdir -p "$PIP_CACHE_DIR"
-### 3. Execution ###
-# CRITICAL: We move to the code directory so imports work
+mkdir -p "$RESULTS_DIR" "$TMPDIR"
+
+# 2. Execution
 cd "$REPO_DIR"
 
-echo "Running on node: $HOSTNAME"
-echo "Date: $(date)"
-echo "Base Volume:  $VOL_BASE"
-echo "Code Dir:     $REPO_DIR"
-echo "Saving results to: $RESULTS_DIR"
+echo "Node: $HOSTNAME | Python: $MY_PYTHON"
 
-python run_layer_experiments.py \
+# Verify environment visibility
+$MY_PYTHON -c "import transformers; print(f'Transformers version: {transformers.__version__}')"
+
+# Run experiment using absolute python path
+$MY_PYTHON run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
     --num-instances 200 \

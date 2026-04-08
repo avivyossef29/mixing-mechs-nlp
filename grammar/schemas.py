@@ -29,7 +29,8 @@ PEOPLE_NAMES = [
     "Mark",
 ]
 LETTERS = [chr(c) for c in range(ord("a"), ord("z") + 1)]
-BOX_VARS = [f"box_{i:02d}" for i in range(0, 100)]
+_hex_letters = "abcdefghij"
+BOX_VARS = [(_hex_letters[tens] + _hex_letters[ones] + _hex_letters[tens]).capitalize() for tens in range(10) for ones in range(10)]
 PROG_VARS = [f"var_{i:02d}" for i in range(0, 100)]
 FEELINGS = ["loves", "admires", "misses", "hates", "dislikes", "likes", "appreciates"]
 DOCTOR_NAMES = [
@@ -945,17 +946,17 @@ SCHEMA_BOXES = Schema(
                 answer_category="Object",
             ),
             "Q:Object A:Box": Query(
-                question="Respond in one word, only the answer and nothing else: Which box is the {Object} in? Answer: box_",
+                question="Respond in one word, only the answer and nothing else: Which box is the {Object} in?",
                 answer_category="Box",
             ),
         },
         capitalize_first_clause=True,
     ),
     max_new_tokens=5,
-    checker=lambda neural, causal: causal.split('_')[-1] in neural.strip(),
+    checker=lambda neural, causal: causal.lower().strip() in neural.lower().strip(),
     matchers=[
         lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_ITEMS)})$", s) is not None,
-        lambda s: re.match(r"^ ?\d{2,3}$", s) is not None,
+        lambda s: re.match(f"^ ?({'|'.join(BOX_VARS)})$", s) is not None,
     ],
 )
 
