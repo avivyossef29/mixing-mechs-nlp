@@ -150,7 +150,7 @@ def run_experiment_for_layer(
 
             matched_text = None
             # בדיקה של 1 עד 4 טוקנים אחורה (מכסה את כל סוגי הטוקנייזרים עבור box_01)
-            for window_size in range(1, 5):
+            for window_size in range(1, 10):
                 start_tok_idx = max(0, i - window_size + 1)
                 combined = "".join(prompt_str_tokenized[start_tok_idx:i+1])
                 # ניקוי סימני רווח מיוחדים של טוקנייזרים (כמו Ġ או  )

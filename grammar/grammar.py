@@ -25,7 +25,7 @@ class Schema:
     templates: Templates
     categories: List[str] = field(init=False)
     max_new_tokens: int = 5
-    checker: Callable[[str, str], bool] = lambda neural, causal: causal.lower().strip() in neural.lower().strip()
+    checker: Callable[[str, str], bool] = lambda neural, causal: re.sub(r'[^\w\s]', '', causal).lower().strip() in re.sub(r'[^\w\s]', '', neural.replace('Ġ', '').replace('\u2581', '')).lower().strip()
     matchers: Optional[list] = None
 
     def __post_init__(self):
