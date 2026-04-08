@@ -39,7 +39,7 @@ $MY_PYTHON -c "import transformers; print(f'Transformers version: {transformers.
 $MY_PYTHON run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
-    --num-instances 200 \
+    --num-instances 20 \
     --num-samples 3000 \
     --hf-token "$HF_TOKEN"
 

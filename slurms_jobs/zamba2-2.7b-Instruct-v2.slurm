@@ -47,7 +47,7 @@ echo "Saving results to: $RESULTS_DIR"
 python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
-    --num-instances 200 \
+    --num-instances 20 \
     --num-samples 1000 \
     --hf-token "$HF_TOKEN"
 

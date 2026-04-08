@@ -13,6 +13,7 @@
 ### 1. Setup Environment ###
 source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/etc/profile.d/conda.sh
 conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/envs/transformers-env
+
 ### 2. Define Paths ###
 USERNAME="inbalmoryles"
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
@@ -46,7 +47,7 @@ echo "Saving results to: $RESULTS_DIR"
 python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
-    --num-instances 200 \
+    --num-instances 20 \
     --num-samples 3000 \
     --hf-token "$HF_TOKEN"
 
