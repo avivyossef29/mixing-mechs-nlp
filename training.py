@@ -241,7 +241,7 @@ def evaluate_featurizer(
     init_lr=1e-2,
     layer: list[int] | int = 17,
     num_instances=2,
-    batch_size=100,
+    batch_size=16,
     ordering: list[int] | None = None,
     layers_at_once=False,
     causal_model: CausalModel | None = None,
@@ -311,7 +311,7 @@ def get_counterfactual_datasets(
     causal_models: CausalModel | None = None,
     sample_an_answerable_question: Callable = sample_answerable_question_template,
     num_test_samples: int | None = None,
-    batch_size=100,
+    batch_size=16,
 ) -> tuple[dict, dict, tuple[list, dict, dict] | None]:
     """
     Get counterfactual datasets for a set of schemas, using the lookbacks first counterfactual template.
@@ -2188,8 +2188,8 @@ def get_counterfactual_datasets_mixed(
         key = f"lookbacks_first_counterfactual_{schema.name}"
         ds1 = {key: CounterfactualDataset.from_sampler(num_samples, lookbacks_first_counterfactual[schema.name])}
         ds2 = {key: CounterfactualDataset.from_sampler(num_samples, lookbacks_first_counterfactual[schema.name])}
-        fds1, failed_data1 = exp.filter(ds1, verbose=True, batch_size=100)
-        fds2, failed_data2 = exp.filter(ds2, verbose=True, batch_size=100)
+        fds1, failed_data1 = exp.filter(ds1, verbose=True, batch_size=16)
+        fds2, failed_data2 = exp.filter(ds2, verbose=True, batch_size=16)
 
         f1 = len(fds1[key]) / num_samples
         f2 = len(fds2[key]) / num_samples

@@ -1,54 +1,56 @@
 #!/bin/bash
 
 ### Resource Allocation ###
-#SBATCH --job-name=zamba2-7B-instruct_patch
-#SBATCH --output=%x-%j.out        # Log file: zamba2-7B-instruct_patch-12345.out
-#SBATCH --error=%x-%j.err          # Error file
+#SBATCH --job-name=zamba2-7B_inbal
+#SBATCH --output=logs/%x-%A_%a.out
+#SBATCH --error=logs/%x-%A_%a.err
 #SBATCH --partition=studentkillable
-#SBATCH --time=12:00:00            # 12 hours max runtime
-#SBATCH --gres=gpu:1               # 1 GPU
-#SBATCH --cpus-per-task=2
+#SBATCH --array=0-80
+#SBATCH --time=23:50:00
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 
 ### 1. Setup Environment ###
-source /vol/joberant_nobck/data/NLP_368307701_2526a/avivyossef/miniconda3/etc/profile.d/conda.sh
+source /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/miniconda3/etc/profile.d/conda.sh
+conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/envs/zamba-env
 
-# Activate your specific environment (using the underscore name)
-conda activate /vol/joberant_nobck/data/NLP_368307701_2526a/avivyossef/venv
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128
 
 ### 2. Define Paths ###
 USERNAME="inbalmoryles"
-
-# A. Base Volume Path (The Root)
 VOL_BASE="/vol/joberant_nobck/data/NLP_368307701_2526a/${USERNAME}"
 
-# B. Derived Paths
-# We assume your code folder is named 'mixing-mechs-nlp' inside your volume
+# Model and Directories
 MODEL_ID="Zyphra/Zamba2-7B-instruct"
 REPO_DIR="${VOL_BASE}/mixing-mechs-nlp"
-RESULTS_DIR="${VOL_BASE}/mixing-mechs-results/zamba-7b"
+RESULTS_DIR="${VOL_BASE}/mixing-mechs-results/run_100boxes_3000samples/${MODEL_ID}"
 
-# Ensure the results directory actually exists
-mkdir -p "$RESULTS_DIR"
+# Cache & Setup
+export HF_HOME="${VOL_BASE}/hf_cache"
+export TRITON_CACHE_DIR="/vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/triton_cache"
+export TMPDIR="${VOL_BASE}/tmp"
+export PIP_CACHE_DIR="${VOL_BASE}/pip_cache"
+export HF_TOKEN=$(cat "${VOL_BASE}/hf_token.txt")
+
+mkdir -p "$TRITON_CACHE_DIR" "$TMPDIR" "$RESULTS_DIR" "$PIP_CACHE_DIR" "$HF_HOME"
 
 ### 3. Execution ###
-# CRITICAL: We move to the code directory so imports work
 cd "$REPO_DIR"
 
 echo "Running on node: $HOSTNAME"
 echo "Date: $(date)"
-echo "Base Volume:  $VOL_BASE"
-echo "Code Dir:     $REPO_DIR"
+echo "Model: $MODEL_ID"
 echo "Saving results to: $RESULTS_DIR"
-
-# Redirect HuggingFace downloads
-export HF_HOME="${VOL_BASE}/hf_cache"
+echo "Running Layer: $SLURM_ARRAY_TASK_ID"
 
 python run_layer_experiments.py \
     --model-id "${MODEL_ID}" \
     --output-dir "$RESULTS_DIR" \
-    --num-instances 20 \
+    --num-instances 100 \
     --num-samples 1000 \
-    --hf-token "YOUR_HF_TOKEN_HERE"
+    --hf-token "$HF_TOKEN" \
+    --start-layer $SLURM_ARRAY_TASK_ID \
+    --end-layer $SLURM_ARRAY_TASK_ID
 
 echo "Job finished at: $(date)"

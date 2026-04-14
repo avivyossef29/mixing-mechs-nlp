@@ -472,7 +472,7 @@ def main(
     generate=False,
     num_fillers=0,
     write_baseline_rate=False,
-    eval_batch_size=100,
+    eval_batch_size=16,
     checkpoint=None,
     do_filter=False,
 ):
