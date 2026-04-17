@@ -1,3 +1,4 @@
+(zamba-env) inbalmoryles@c-003:/vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/mixing-mechs-nlp-boxes$ cat run_layer_experiments.py
 #!/usr/bin/env python3
 """
 Run patch effect experiments across all layers of a model.
@@ -143,21 +144,46 @@ def run_experiment_for_layer(
         answer_indices = []
         keyload_index = None
         payload_index = None
-        for i, token in enumerate(prompt_str_tokenized):
-            if "qwen" in model_id_str.lower() and i < 10:
-                continue
+        print(f"DEBUG: Searching for category index {cat_to_query} which is: {schema.categories[cat_to_query]}")
+        print(f"DEBUG: First 5 BOX_VARS: {schema.items['Box'][:5]}")
+        for i in range(len(prompt_str_tokenized)):
+            matched_text = None
+            current_start = None
+            for window_size in range(1, 10):
+                start_tok_idx = max(0, i - window_size + 1)
+                combined = "".join(prompt_str_tokenized[start_tok_idx:i+1])
+                # ניקוי תווים מיוחדים כדי לזהות שמות כמו Cjc
+                cleaned = combined.strip()
+                
+                
+                if schema.matchers[cat_to_query](cleaned):
+                    if cat_to_query == 1 and not cleaned.isdigit():
+                        continue
+                        
+     
+                    matched_text = cleaned
+                    current_start = start_tok_idx
+                    break
+            
+            if matched_text is not None:
+                # מונע כפילויות של טוקנים באותה מילה
+                if len(answer_indices) > 0 and answer_indices[-1] == current_start:
+                    continue
 
-            if schema.matchers[cat_to_query](token):
-                answer_indices.append(i)
+                    
+                answer_indices.append(start_tok_idx)
+                
+                curr_idx = len(answer_indices) - 1
+                # השוואה חסינה למספרים (04 == 4 == "04")
+                if metadata.get("keyload") is not None and int(cleaned) == int(metadata["keyload"]):
+                    keyload_index = curr_idx
+                if metadata.get("payload") is not None and int(cleaned) == int(metadata["payload"]):
+                    payload_index = curr_idx
 
-                if prompt_str_tokenized[i].lower().strip() in metadata["keyload"].lower().strip():
-                    keyload_index = len(answer_indices) - 1
 
-                if prompt_str_tokenized[i].lower().strip() in metadata["payload"].lower().strip():
-                    payload_index = len(answer_indices) - 1
 
         assert (
-            len(answer_indices) == num_instances
+        len(answer_indices) == num_instances
         ), f"Expected {num_instances} answer indices, got {len(answer_indices)}.\nPrompt_str_tokenized: {prompt_str_tokenized}.\n{[prompt_str_tokenized[i] for i in answer_indices]}."
         assert (
             keyload_index is not None
