@@ -694,7 +694,7 @@ SCHEMA_BOXES = Schema(
     # checker=lambda neural, causal: causal.strip().lower() in neural.strip().lower(), # Checker for when querying the items
     matchers=[
         lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_ITEMS)})$", s) is not None,
-        lambda s: re.match("^ [A-Z]$", s) is not None,
+        lambda s: re.match(r"^ ?\d{2}$", s.strip()) is not None,
     ],
 )
 
