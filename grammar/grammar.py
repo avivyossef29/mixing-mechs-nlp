@@ -118,7 +118,7 @@ class BindingTask:
         return {
             'context': full_context,
             'question': question,
-            'answer': answer
+            'answer': " " + answer
         }
     
 class TaskFactory:
