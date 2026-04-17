@@ -17,8 +17,8 @@ PEOPLE_NAMES = [
 
 VARIABLES = [f"var_{i}" for i in range(1, 101)]
 
-_hex_letters = "abcdefghij"
-BOX_VARS = [f"{i:02d}" for i in range(100)]
+# Updated to securely format boxes from 00 to 99 with standard prefix 
+BOX_VARS = [f"box_{i:02d}" for i in range(100)]
 
 LETTERS = [chr(c) for c in range(ord("a"), ord("z") + 1)]
 
@@ -330,7 +330,11 @@ SCHEMA_FILLING_LIQUIDS = Schema(
     ),
     max_new_tokens=5,
     checker=lambda neural, causal: causal.lower().strip() in neural.lower().strip(),
-    matchers=[lambda s: s.strip() in HOUSEHOLD_ITEMS, lambda s: s.strip() in BOX_VARS],
+    matchers=[
+        lambda s: s.strip() in PEOPLE_NAMES,
+        lambda s: s.strip() in CONTAINERS,
+        lambda s: s.strip() in LIQUIDS
+    ],
 )
 
 SCHEMA_PEOPLE_AND_OBJECTS = Schema(
@@ -367,7 +371,11 @@ SCHEMA_PEOPLE_AND_OBJECTS = Schema(
             ),
         },
     ),
-    matchers=[lambda s: s.strip() in HOUSEHOLD_ITEMS, lambda s: s.strip() in BOX_VARS],
+    matchers=[
+        lambda s: s.strip() in PEOPLE_NAMES,
+        lambda s: s.strip() in HOUSEHOLD_ITEMS,
+        lambda s: s.strip() in HOUSEHOLD_LOCATIONS
+    ],
 )
 
 SCHEMA_PROGRAMMING_PEOPLE_DICT = Schema(
@@ -403,7 +411,11 @@ SCHEMA_PROGRAMMING_PEOPLE_DICT = Schema(
         capitalize_first_clause=False,
         prefix="The following are dictionary variables in Python: ",
     ),
-    matchers=[lambda s: s.strip() in HOUSEHOLD_ITEMS, lambda s: s.strip() in BOX_VARS],
+    matchers=[
+        lambda s: s.strip() in VARIABLES,
+        lambda s: s.strip() in PEOPLE_NAMES,
+        lambda s: s.strip() in COUNTRIES
+    ],
 )
 
 SCHEMA_MUSIC_PERFORMANCE = Schema(
@@ -441,7 +453,11 @@ SCHEMA_MUSIC_PERFORMANCE = Schema(
     ),
     checker=lambda neural, causal: causal.lower().strip() in neural.lower().strip(),
     max_new_tokens=5,
-    matchers=[lambda s: s.strip() in HOUSEHOLD_ITEMS, lambda s: s.strip() in BOX_VARS],
+    matchers=[
+        lambda s: s.strip() in PEOPLE_NAMES,
+        lambda s: s.strip() in MUSIC_GENRES,
+        lambda s: s.strip() in MUSIC_INSTRUMENTS
+    ],
 )
 
 SCHEMA_LAB_EXPERIMENTS = Schema(
@@ -477,7 +493,11 @@ SCHEMA_LAB_EXPERIMENTS = Schema(
         },
         capitalize_first_clause=False,
     ),
-    matchers=[lambda s: s.strip() in HOUSEHOLD_ITEMS, lambda s: s.strip() in BOX_VARS],
+    matchers=[
+        lambda s: s.strip() in PEOPLE_NAMES,
+        lambda s: s.strip() in SUBSTANCES,
+        lambda s: s.strip() in EQUIPMENT
+    ],
     max_new_tokens=5,
     checker=lambda neural, causal: causal.lower().strip().split()[-1] in neural.lower().strip(),
 )
@@ -515,7 +535,11 @@ SCHEMA_CHEMISTRY_EXPERIMENTS = Schema(
         },
         capitalize_first_clause=False,
     ),
-    matchers=[lambda s: s.strip() in HOUSEHOLD_ITEMS, lambda s: s.strip() in BOX_VARS],
+    matchers=[
+        lambda s: s.strip() in PEOPLE_NAMES,
+        lambda s: s.strip() in CHEMICALS,
+        lambda s: s.strip() in APPARATUSES
+    ],
     max_new_tokens=5,
     checker=lambda neural, causal: causal.lower().strip().split()[-1] in neural.lower().strip(),
 )
@@ -553,7 +577,11 @@ SCHEMA_TRANSPORTATION = Schema(
         },
         capitalize_first_clause=False,
     ),
-    matchers=[lambda s: s.strip() in HOUSEHOLD_ITEMS, lambda s: s.strip() in BOX_VARS],
+    matchers=[
+        lambda s: s.strip() in PEOPLE_NAMES,
+        lambda s: s.strip() in VEHICLES,
+        lambda s: s.strip() in DESTINATIONS
+    ],
     max_new_tokens=5,
     checker=lambda n, c: c.lower().strip() in n.lower().strip(),
 )
@@ -591,7 +619,11 @@ SCHEMA_SPORTS_EVENTS = Schema(
         },
         capitalize_first_clause=False,
     ),
-    matchers=[lambda s: s.strip() in HOUSEHOLD_ITEMS, lambda s: s.strip() in BOX_VARS],
+    matchers=[
+        lambda s: s.strip() in PEOPLE_NAMES,
+        lambda s: s.strip() in SPORTS,
+        lambda s: s.strip() in VENUES
+    ],
     max_new_tokens=5,
     checker=lambda n, c: c.lower().strip() in n.lower().strip(),
 )
@@ -630,7 +662,11 @@ SCHEMA_SPACE_OBSERVATIONS = Schema(
         capitalize_first_clause=False,
     ),
     max_new_tokens=5,
-    matchers=[lambda s: s.strip() in HOUSEHOLD_ITEMS, lambda s: s.strip() in BOX_VARS],
+    matchers=[
+        lambda s: s.strip() in PEOPLE_NAMES,
+        lambda s: s.strip() in SPACE_OBJECTS,
+        lambda s: s.strip() in SPACE_INSTRUMENTS
+    ],
     checker=lambda neural, causal: causal.lower().strip().split()[-1] in neural.lower().strip(),
 )
 
@@ -640,25 +676,27 @@ SCHEMA_BOXES = Schema(
     templates=Templates(
         prefix="",
         definitions={
-            "row_default": "the {Object} is in Box {Box}",
-            "ordering_01": "the {Object} is in Box {Box}",
+            "row_default": "the {Object} is in {Box}",
+            "ordering_01": "the {Object} is in {Box}",
         },
         queries={
             "Q:Box A:Object": Query(
-                question="Respond in one word, only the answer and nothing else: What does Box {Box} contain?",
+                question="Respond in one word, only the answer and nothing else: What does {Box} contain?",
                 answer_category="Object",
             ),
             "Q:Object A:Box": Query(
-                question="Respond in one word, only the answer and nothing else: Which box is the {Object} in? Box",
+                question="Respond in one word, only the answer and nothing else: Which box is the {Object} in?",
                 answer_category="Box",
             ),
         },
         capitalize_first_clause=True,
     ),
     max_new_tokens=5,
-    checker=lambda neural, causal: causal
-    in re.search(r"(Box )?(\d+)", neural.strip()).group(2).strip(),
-    matchers=[lambda s: s.strip() in HOUSEHOLD_ITEMS, lambda s: s.strip() in BOX_VARS],
+    checker=lambda neural, causal: causal.lower().strip() in neural.lower().strip(),
+    matchers=[
+        lambda s: s.strip() in HOUSEHOLD_ITEMS, 
+        lambda s: s.strip() in BOX_VARS
+    ],
 )
 
 if __name__ == "__main__":

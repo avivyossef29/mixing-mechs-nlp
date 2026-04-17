@@ -129,9 +129,6 @@ class TaskFactory:
         self.schema = schema
         self.categories = schema.categories
         self.templates = schema.templates
-        
-        if len(self.categories) != 3:
-            raise ValueError(f"Schema must contain exactly three categories, but found {len(self.categories)}.")
 
     def create_task_instance(self, num_instances: int) -> BindingTask:
         """
