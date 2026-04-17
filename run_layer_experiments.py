@@ -146,8 +146,9 @@ def run_experiment_for_layer(
         for i, token in enumerate(prompt_str_tokenized):
             if "qwen" in model_id_str.lower() and i < 10:
                 continue
+            
 
-            if schema.matchers[cat_to_query](token):
+            if schema.matchers[cat_to_query](token.strip()):
                 answer_indices.append(i)
 
                 if prompt_str_tokenized[i].lower().strip() in metadata["keyload"].lower().strip():

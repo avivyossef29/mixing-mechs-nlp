@@ -370,8 +370,8 @@ SCHEMA_PEOPLE_AND_OBJECTS = Schema(
     ),
     matchers=[
         lambda s: re.match(f"^ ?({'|'.join(PEOPLE_NAMES)})$", s) is not None,
-        lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_ITEMS)})$", s) is not None,
-        lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_LOCATIONS)})$", s) is not None,
+        lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_ITEMS)})$", s.strip()) is not None,
+        lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_LOCATIONS)})$", s.strip()) is not None,
     ],
 )
 
@@ -688,12 +688,10 @@ SCHEMA_BOXES = Schema(
         },
         capitalize_first_clause=True,
     ),
-    max_new_tokens=3,
-    checker=lambda neural, causal: causal
-    in re.search("(Box )?([A-Z])", neural.strip()).group(2).strip(),  # Checker for when querying the letters
-    # checker=lambda neural, causal: causal.strip().lower() in neural.strip().lower(), # Checker for when querying the items
+    max_new_tokens=5,
+    checker=lambda neural, causal: causal in re.search("(Box )?(\d+)", neural.strip()).group(2).strip(),    # checker=lambda neural, causal: causal.strip().lower() in neural.strip().lower(), # Checker for when querying the items
     matchers=[
-        lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_ITEMS)})$", s) is not None,
+        lambda s: re.match(f"^ ?({'|'.join(HOUSEHOLD_ITEMS)})$", s.strip()) is not None,
         lambda s: re.match(r"^ ?\d{2}$", s.strip()) is not None,
     ],
 )

@@ -25,7 +25,7 @@ class Schema:
     templates: Templates
     categories: List[str] = field(init=False)
     max_new_tokens: int = 1
-    checker: Callable[[str, str], bool] = lambda neural, causal: causal.lower().strip() in neural.lower().strip()
+    checker: Callable[[str, str], bool] = lambda neural, causal: causal.strip() in neural.lower().strip()
     matchers: Optional[list] = None
 
     def __post_init__(self):
@@ -118,7 +118,7 @@ class BindingTask:
         return {
             'context': full_context,
             'question': question,
-            'answer': " " + answer
+            'answer': answer
         }
     
 class TaskFactory:
