@@ -1,4 +1,3 @@
-(zamba-env) inbalmoryles@c-003:/vol/joberant_nobck/data/NLP_368307701_2526a/inbalmoryles/mixing-mechs-nlp-boxes$ cat run_layer_experiments.py
 #!/usr/bin/env python3
 """
 Run patch effect experiments across all layers of a model.
