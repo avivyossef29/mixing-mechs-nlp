@@ -56,7 +56,7 @@ CONTAINERS = [
     "canteen", "bota", "cruet", "phial", "ewer", "carafe", "flagon", "pipkin", "skillet", "wok",
     "cauldron", "kettle", "boiler", "copper", "alembic", "retort", "samovar", "terrine", "tureen", "pail",
     "canister", "shaker", "tub", "vat", "vial", "tank", "basin", "barrel", "pouch", "tin",
-    "hamper", "basket", "pot", "ampule", "flasket", "humidor", "reliquary"
+    "hamper", "pot", "ampule", "flasket", "humidor", "reliquary"
 ]
 
 HOUSEHOLD_ITEMS = [
