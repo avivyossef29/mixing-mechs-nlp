@@ -18,7 +18,7 @@ PEOPLE_NAMES = [
 VARIABLES = [f"var_{i}" for i in range(1, 101)]
 
 # Updated to securely format boxes from 00 to 99 with standard prefix 
-BOX_VARS = [f"box_{i:02d}" for i in range(100)]
+BOX_VARS = [f"{i:02d}" for i in range(100)]
 
 LETTERS = [chr(c) for c in range(ord("a"), ord("z") + 1)]
 
